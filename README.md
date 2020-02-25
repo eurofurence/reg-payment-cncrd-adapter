@@ -1,0 +1,1 @@
+# reg-payment-cncrd-adapter
