@@ -1,6 +1,6 @@
 module github.com/eurofurence/reg-payment-cncrd-adapter
 
-go 1.12
+go 1.16
 
 require (
 	github.com/StephanHCB/go-autumn-config v0.2.0
