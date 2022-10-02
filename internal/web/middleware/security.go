@@ -22,7 +22,6 @@ func TokenValidator(next http.Handler) http.Handler {
 
 		apiTokenValue := fromApiTokenHeader(r)
 		if apiTokenValue != "" {
-			// ignore jwt if set (may still need to pass it through to other service)
 			if apiTokenValue == config.FixedApiToken() {
 				ctxvalues.SetApiToken(ctx, apiTokenValue)
 				next.ServeHTTP(w, r)
@@ -32,7 +31,7 @@ func TokenValidator(next http.Handler) http.Handler {
 			return
 		}
 
-		// not supplying either is a valid use case, there are endpoints that allow anonymous access
+		// not supplying an api token is a valid use case, there are endpoints that allow anonymous access
 		next.ServeHTTP(w, r)
 		return
 	}
