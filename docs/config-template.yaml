@@ -1,2 +1,9 @@
 server:
   port: 9097
+logging:
+  severity: INFO
+security:
+  fixed_token:
+    api: 'put_secure_random_string_here_for_api_token'
+  # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
+  disable_cors: false

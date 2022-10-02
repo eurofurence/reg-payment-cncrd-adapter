@@ -1,4 +1,6 @@
 .idea/**
 *.exe
 config.yaml
+test/contract/*/log/**
+payment-cncrd-adapter
 main
