@@ -1,0 +1,511 @@
+openapi: 3.0.3
+info:
+  title: Payment Concardis Adapter Service
+  description: |-
+    This services provides methods to create and managed Concardis Payment Links.
+    It also provides a valid callback endpoint for the Concardis Payment Link
+    service to notify us of change events.
+  license:
+    name: MIT
+    url: https://github.com/eurofurence/reg-attendee-service/blob/main/LICENSE
+  version: 0.1.0
+servers:
+  - url: /api/rest/v1
+    description: localhost
+  - url: /attsrv/api/rest/v1
+    description: server
+tags:
+  - name: paylinks
+    description: Interface to the payment service
+  - name: transactions
+    description: Transactions management
+  - name: callback
+    description: Interface towards Concardis (callback)
+  - name: info
+    description: Health and other public status information
+paths:
+  /paylinks:
+    post:
+      tags:
+        - paylinks
+      summary: Create a new payment link
+      description: |-
+        Create a new payment link with Concardis. The link can then be used for
+        paying the defined amount and can be presented to the user in various
+        ways, including as a link in an email or as an embedded modal dialog in
+        our shop page.
+        
+        We intentionally work with as little information as possible. Specifically,
+        we avoid attaching and personally identifiable information.
+      operationId: addPaymentLink
+      requestBody:
+        description: Create a new payment link
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentLink'
+        required: true
+      responses:
+        '201':
+          description: Successfully created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created resource, ending in the assigned payment link id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLink'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to replay transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
+  /paylinks/{id}:
+    get:
+      tags:
+        - paylinks
+      summary: Find payment link by id
+      description: |-
+        Returns a single payment link, fetching the current status from
+        the downstream Concardis payment link backend.
+      operationId: getPaymentLinkById
+      parameters:
+        - name: id
+          in: path
+          description: Id of the payment link to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentLink'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this payment link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - paylinks
+      summary: Delete a payment link by id
+      description: Removes a payment link from the upstream Concardis backend
+      operationId: deletePaymentLinkById
+      parameters:
+        - name: id
+          in: path
+          description: Id of the payment link to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to delete this payment link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
+  /paylinks/{id}/refund:
+    post:
+      tags:
+        - paylinks
+      summary: Refund payments by paylink id
+      description: |-
+        Refund all payments made using the references paylink.
+      operationId: refundPaymentLinkById
+      parameters:
+        - name: id
+          in: path
+          description: Id of the payment link to refund
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to refund this payment link
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Payment link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - ApiKeyAuth: []
+  /webhook/{secret}:
+    post:
+      tags:
+        - callback
+      summary: Inform us that there is an update for a payment link
+      description: |-
+        Inform us that there is an update for a payment link
+      operationId: webhookCallback
+      parameters:
+        - name: secret
+          in: path
+          description: secret as configured by us when setting up the webhook callback
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+        required: true
+      responses:
+        '200':
+          description: Successfully received
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /transactions/replay:
+    post:
+      tags:
+        - transactions
+      summary: Replay n days of transactions
+      description: |-
+        Replay n days of transactions to the payment service, reading them from
+        the Concardis backend. This is intended as a safety measure in case
+        transaction events were lost and need to be repeated. The payment service
+        is required to be idempotent regarding transaction event notifications.
+      operationId: transactionReplay
+      parameters:
+        - name: days
+          in: query
+          description: number of days to replay transactions for
+          required: true
+          schema:
+            type: number
+            default: 1
+      responses:
+        '200':
+          description: Successfully replayed
+        '400':
+          description: Invalid number of days supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to replay transactions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /health:
+    get:
+      tags:
+        - info
+      summary: Get service health report
+      description: Get service health report
+      operationId: getHealthReport
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthReport'
+components:
+  schemas:
+    PaymentLink:
+      type: object
+      required:
+        - purpose
+        - referenceId
+        - amountDue
+        - currency
+        - vatRate
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: The page title to be shown on the payment page.
+          example: Payment of Eurofurence 27 registration fee for CrystalFox.
+        description:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The description to be shown on the payment page.
+          example: Payment for Eurofurence 27 membership.
+        referenceId:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Internal reference number for this payment process.
+          example: ab23-1870ffe6-ca1778de7-0167
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The purpose of this payment process.
+          example: Payment of Eurofurence 27 registration fee for CrystalFox.
+        amountDue:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The amount to bill for. TODO - is this Cents or Euros?
+          example: 95
+        amountPaid:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Only used in responses. The total amount paid. TODO - is this Cents or Euros?
+          example: 95
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: The currency to use.
+          example: EUR
+        vatRate:
+          type: number
+          format: float
+          description: The applicable VAT, in percent.
+          example: 19.0
+        link:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: They payment link.
+          example: https://instancename.pay-link.eu/?payment=382c85eab7a86278e3c3b06a23af2358
+    WebhookEvent:
+      type: object
+      required:
+        - transaction
+      properties:
+        transaction:
+          type: object
+          required:
+            - id
+            - invoice
+          additionalProperties: true
+          properties:
+            id:
+              type: integer
+              format: int64
+              minimum: 1
+              description: Id of the transaction.
+              example: 711
+            invoice:
+              type: object
+              required:
+                - number
+              additionalProperties: true
+              properties:
+                number:
+                  type: string
+                  minimum: 1
+                  minLength: 1
+                  maxLength: 80
+                  description: Id of the payment link concerned.
+                  example: "192653"
+    HealthReport:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Health status of this service.
+          enum:
+            - ok
+            - unhealthy
+          example: ok
+    Error:
+      type: object
+      required:
+        - message
+        - timestamp
+        - requestid
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The time at which the error occurred.
+          example: 2006-01-02T15:04:05+07:00
+        requestid:
+          type: string
+          description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
+          example: a8b7c6d5
+        messsage:
+          type: string
+          description: |-
+            A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
+            
+            At this time, there are these values:
+            - paylink.parse.error (json body parse error)
+            - paylink.data.invalid (field data failed to validate, see details for more information)
+            - paylink.id.notfound (no such paylink number in the Concardis service)
+            - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
+            - auth.unauthorized (token missing completely or invalid)
+            - auth.forbidden (permissions missing)
+          example: paylink.data.invalid
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional list of additional details about the error. If available, will usually contain English language technobabble.
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: A shared secret used for local communication (also useful for local development)
