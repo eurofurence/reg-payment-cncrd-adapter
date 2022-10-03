@@ -13,7 +13,7 @@ func UseEcsLogging() bool {
 
 func ServerAddr() string {
 	c := Configuration()
-	return fmt.Sprintf("%s:%s", c.Server.Address, c.Server.Port)
+	return fmt.Sprintf("%s:%d", c.Server.Address, c.Server.Port)
 }
 
 func ServerReadTimeout() time.Duration {

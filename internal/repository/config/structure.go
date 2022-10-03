@@ -2,7 +2,7 @@ package config
 
 type serverConfig struct {
 	Address      string `yaml:"address"`
-	Port         string `yaml:"port"`
+	Port         uint16 `yaml:"port"`
 	ReadTimeout  int    `yaml:"read_timeout_seconds"`
 	WriteTimeout int    `yaml:"write_timeout_seconds"`
 	IdleTimeout  int    `yaml:"idle_timeout_seconds"`

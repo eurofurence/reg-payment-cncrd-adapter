@@ -34,7 +34,7 @@ func TestParseAndOverwriteConfigValidationErrors1(t *testing.T) {
 	docs.Description("check that a yaml with validation errors leads to an error")
 	wrongConfigYaml := `# yaml with validation errors
 server:
-  port: abcde
+  port: 14
 logging:
   severity: FELINE
 `
@@ -52,6 +52,6 @@ security:
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")
-	require.Equal(t, "8080", Configuration().Server.Port, "unexpected value for server.port")
+	require.Equal(t, uint16(8080), Configuration().Server.Port, "unexpected value for server.port")
 	require.Equal(t, "INFO", Configuration().Logging.Severity, "unexpected value for logging.severity")
 }

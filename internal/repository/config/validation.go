@@ -7,8 +7,8 @@ import (
 )
 
 func setConfigurationDefaults(c *conf) {
-	if c.Server.Port == "" {
-		c.Server.Port = "8080"
+	if c.Server.Port == 0 {
+		c.Server.Port = 8080
 	}
 	if c.Server.ReadTimeout <= 0 {
 		c.Server.ReadTimeout = 5
@@ -27,9 +27,7 @@ func setConfigurationDefaults(c *conf) {
 const portPattern = "^[1-9][0-9]{0,4}$"
 
 func validateServerConfiguration(errs url.Values, c serverConfig) {
-	if violatesPattern(portPattern, c.Port) {
-		errs.Add("server.port", "must be a number between 1 and 65535")
-	}
+	checkIntValueRange(&errs, 1024, 65535, "server.port", int(c.Port))
 	checkIntValueRange(&errs, 1, 300, "server.read_timeout_seconds", c.ReadTimeout)
 	checkIntValueRange(&errs, 1, 300, "server.write_timeout_seconds", c.WriteTimeout)
 	checkIntValueRange(&errs, 1, 300, "server.idle_timeout_seconds", c.IdleTimeout)
