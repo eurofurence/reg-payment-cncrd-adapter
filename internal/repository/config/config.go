@@ -43,3 +43,11 @@ func IsCorsDisabled() bool {
 func PaymentServiceBaseUrl() string {
 	return Configuration().Downstream.PaymentService
 }
+
+func ConcardisDownstreamBaseUrl() string {
+	return Configuration().Downstream.ConcardisDownstream
+}
+
+func ConcardisInstanceName() string {
+	return Configuration().Downstream.ConcardisInstance
+}
