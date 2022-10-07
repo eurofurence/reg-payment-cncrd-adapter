@@ -1,1 +1,3 @@
-# Configuration containing most of the boilerplate required by all tests.
+security:
+  fixed_token:
+    api: 'put_secure_random_string_here_for_api_token_test_token'

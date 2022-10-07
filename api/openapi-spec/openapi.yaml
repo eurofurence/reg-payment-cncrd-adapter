@@ -12,8 +12,6 @@ info:
 servers:
   - url: /api/rest/v1
     description: localhost
-  - url: /attsrv/api/rest/v1
-    description: server
 tags:
   - name: paylinks
     description: Interface to the payment service
@@ -424,7 +422,7 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-          description: They payment link.
+          description: The payment link.
           example: https://instancename.pay-link.eu/?payment=382c85eab7a86278e3c3b06a23af2358
     WebhookEvent:
       type: object
@@ -485,7 +483,7 @@ components:
           type: string
           description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
           example: a8b7c6d5
-        messsage:
+        message:
           type: string
           description: |-
             A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
