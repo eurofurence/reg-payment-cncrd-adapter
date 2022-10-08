@@ -5,6 +5,7 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
 	"github.com/stretchr/testify/require"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -20,7 +21,7 @@ func TestHealthEndpoint(t *testing.T) {
 	docs.Then("then OK is returned, and no further information is available")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 	require.Equal(t, media.ContentTypeTextPlain, response.contentType, "unexpected response content type")
-	require.Equal(t, "OK", response.body, "unexpected response from health endpoint")
+	require.Equal(t, `{"status":"OK"}`, strings.TrimSpace(response.body), "unexpected response from health endpoint")
 }
 
 func TestErrorFallback(t *testing.T) {

@@ -2,7 +2,6 @@ package acceptance
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
 	"github.com/go-http-utils/headers"
@@ -50,13 +49,13 @@ func tstWebResponseFromResponse(response *http.Response) tstWebResponse {
 	}
 }
 
-func tstPerformGet(relativeUrlWithLeadingSlash string, bearerToken string) tstWebResponse {
+func tstPerformGet(relativeUrlWithLeadingSlash string, apiToken string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodGet, ts.URL+relativeUrlWithLeadingSlash, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	if apiToken != "" {
+		request.Header.Set(media.HeaderXApiKey, apiToken)
 	}
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -65,29 +64,13 @@ func tstPerformGet(relativeUrlWithLeadingSlash string, bearerToken string) tstWe
 	return tstWebResponseFromResponse(response)
 }
 
-func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
-	request, err := http.NewRequest(http.MethodPut, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
-	if err != nil {
-		log.Fatal(err)
-	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
-	}
-	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return tstWebResponseFromResponse(response)
-}
-
-func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
+func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, apiToken string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodPost, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	if apiToken != "" {
+		request.Header.Set(media.HeaderXApiKey, apiToken)
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
@@ -128,16 +111,43 @@ func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStat
 	}
 }
 
-func tstBuildValidPaymentLinkRequest(testcase string) cncrdapi.PaymentLink {
-	return cncrdapi.PaymentLink{
-		Title:       "some title",
-		Description: "some description",
-		ReferenceId: fmt.Sprintf("144823ad-%s", testcase),
-		Purpose:     "some purpose",
+func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expectedStatus int) {
+	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
+	actualBody := cncrdapi.PaymentLinkDto{}
+	tstParseJson(response.body, &actualBody)
+	expectedBody := tstBuildValidPaymentLink()
+	require.EqualValues(t, expectedBody, actualBody)
+}
+
+func tstRequireConcardisRecording(t *testing.T, expectedEntries ...string) {
+	actual := concardisMock.Recording()
+	require.Equal(t, len(expectedEntries), len(actual))
+	for i := range expectedEntries {
+		require.Equal(t, expectedEntries[i], actual[i])
+	}
+}
+
+// --- data ---
+
+func tstBuildValidPaymentLinkRequest() cncrdapi.PaymentLinkRequestDto {
+	return cncrdapi.PaymentLinkRequestDto{
+		DebitorId: 1,
+		AmountDue: 390,
+		Currency:  "EUR",
+		VatRate:   19.0,
+	}
+}
+
+func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
+	return cncrdapi.PaymentLinkDto{
+		Title:       "some page title",
+		Description: "some page description",
+		ReferenceId: "144823ad-000001",
+		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
-		Link:        "",
+		Link:        "http://localhost:1111/some/paylink",
 	}
 }

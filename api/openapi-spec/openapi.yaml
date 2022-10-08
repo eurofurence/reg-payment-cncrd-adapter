@@ -41,7 +41,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentLink'
+              $ref: '#/components/schemas/PaymentLinkRequest'
         required: true
       responses:
         '201':
@@ -362,6 +362,36 @@ paths:
                 $ref: '#/components/schemas/HealthReport'
 components:
   schemas:
+    PaymentLinkRequest:
+      type: object
+      required:
+        - debitorId
+        - amountDue
+        - currency
+        - vatRate
+      properties:
+        debitorId:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The badge number of the attendee. Will be used to build appropriate description, referenceId, etc.
+        amountDue:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The amount to bill for. TODO - is this Cents or Euros?
+          example: 95
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: The currency to use.
+          example: EUR
+        vatRate:
+          type: number
+          format: float
+          description: The applicable VAT, in percent.
+          example: 19.0
     PaymentLink:
       type: object
       required:
@@ -495,6 +525,8 @@ components:
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
+            - paylink.downstream.error (downstream api failure)
+            - unexpected (an unexpected error)
           example: paylink.data.invalid
         details:
           type: array

@@ -32,7 +32,7 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 	m.recording = append(m.recording, fmt.Sprintf("CreatePaymentLink %v", request))
 	return PaymentLinkCreated{
 		ID:          42,
-		ReferenceID: "deadbeef",
+		ReferenceID: request.ReferenceId,
 		Link:        "http://localhost:1111/some/paylink",
 	}, nil
 }

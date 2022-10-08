@@ -26,6 +26,11 @@ func UnauthorizedError(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{details}})
 }
 
+func UnexpectedError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("unexpected error: %s", err.Error())
+	ErrorHandler(ctx, w, r, "unexpected", http.StatusInternalServerError, nil)
+}
+
 func ErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {
 	timestamp := time.Now().Format(time.RFC3339)
 	response := cncrdapi.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}

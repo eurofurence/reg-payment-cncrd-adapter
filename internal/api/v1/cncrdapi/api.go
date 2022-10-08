@@ -16,14 +16,26 @@ type ErrorDto struct {
 	Details url.Values `json:"details,omitempty"`
 }
 
-// HealthReport struct for HealthReport
-type HealthReport struct {
+// HealthReportDto struct for HealthReportDto
+type HealthReportDto struct {
 	// Health status of this service.
 	Status string `json:"status"`
 }
 
-// PaymentLink struct for PaymentLink
-type PaymentLink struct {
+// PaymentLinkRequestDto struct for PaymentLinkDto
+type PaymentLinkRequestDto struct {
+	// The badge number of the attendee. Will be used to build appropriate description, referenceId, etc.
+	DebitorId uint64 `json:"debitorId"`
+	// The page title to be shown on the payment page.
+	AmountDue int64 `json:"amountDue"`
+	// Only used in responses. The total amount paid. TODO - is this Cents or Euros?
+	Currency string `json:"currency"`
+	// The applicable VAT, in percent.
+	VatRate float64 `json:"vatRate"`
+}
+
+// PaymentLinkDto struct for PaymentLinkDto
+type PaymentLinkDto struct {
 	// The page title to be shown on the payment page.
 	Title string `json:"title"`
 	// The description to be shown on the payment page.
@@ -44,8 +56,8 @@ type PaymentLink struct {
 	Link string `json:"link"`
 }
 
-// WebhookEvent struct for WebhookEvent
-type WebhookEvent struct {
+// WebhookEventDto struct for WebhookEventDto
+type WebhookEventDto struct {
 	Transaction WebhookEventTransaction `json:"transaction"`
 }
 
