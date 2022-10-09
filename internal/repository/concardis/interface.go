@@ -2,6 +2,7 @@ package concardis
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -12,6 +13,11 @@ type ConcardisDownstream interface {
 
 	QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error)
 }
+
+var (
+	NoSuchID404Error = errors.New("payment link id not found")
+	DownstreamError  = errors.New("downstream unavailable - see log for details")
+)
 
 // -- CreatePaymentLink --
 

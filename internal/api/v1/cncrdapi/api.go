@@ -25,13 +25,13 @@ type HealthReportDto struct {
 // PaymentLinkRequestDto struct for PaymentLinkDto
 type PaymentLinkRequestDto struct {
 	// The badge number of the attendee. Will be used to build appropriate description, referenceId, etc.
-	DebitorId uint64 `json:"debitorId"`
+	DebitorId uint64 `json:"debitor_id"`
 	// The page title to be shown on the payment page.
-	AmountDue int64 `json:"amountDue"`
+	AmountDue int64 `json:"amount_due"`
 	// Only used in responses. The total amount paid. TODO - is this Cents or Euros?
 	Currency string `json:"currency"`
 	// The applicable VAT, in percent.
-	VatRate float64 `json:"vatRate"`
+	VatRate float64 `json:"vat_rate"`
 }
 
 // PaymentLinkDto struct for PaymentLinkDto
@@ -41,17 +41,17 @@ type PaymentLinkDto struct {
 	// The description to be shown on the payment page.
 	Description string `json:"description"`
 	// Internal reference number for this payment process.
-	ReferenceId string `json:"referenceId"`
+	ReferenceId string `json:"reference_id"`
 	// The purpose of this payment process.
 	Purpose string `json:"purpose"`
 	// The amount to bill for. TODO - is this Cents or Euros?
-	AmountDue int64 `json:"amountDue"`
+	AmountDue int64 `json:"amount_due"`
 	// Only used in responses. The total amount paid. TODO - is this Cents or Euros?
-	AmountPaid int64 `json:"amountPaid"`
+	AmountPaid int64 `json:"amount_paid"`
 	// The currency to use.
 	Currency string `json:"currency"`
 	// The applicable VAT, in percent.
-	VatRate float64 `json:"vatRate"`
+	VatRate float64 `json:"vat_rate"`
 	// The payment link.
 	Link string `json:"link"`
 }

@@ -5,10 +5,33 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
+	"net/url"
 )
 
+func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) url.Values {
+	errs := url.Values{}
+
+	if data.DebitorId == 0 {
+		errs.Add("debitor_id", "field must be a positive integer (the badge number to bill for)")
+	}
+	if data.AmountDue <= 0 {
+		errs.Add("amount_due", "must be a positive integer (the amount to bill)")
+	}
+	if data.Currency != "EUR" {
+		errs.Add("currency", "right now, only EUR is supported")
+	}
+	if data.VatRate < 0.0 || data.VatRate > 50.0 {
+		errs.Add("vat_rate", "vat rate should be provided in percent and must be between 0.0 and 50.0")
+	}
+
+	if len(errs) == 0 {
+		return nil
+	} else {
+		return errs
+	}
+}
+
 func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, int64, error) {
-	// TODO validation
 	concardisRequest := i.concardisCreateRequestFromApiRequest(data)
 	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
 	if err != nil {
@@ -18,13 +41,17 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkR
 	return output, concardisResponse.ID, nil
 }
 
+const timestampInRefIdFormat = "060102-150405"
+
 func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto) concardis.PaymentLinkCreateRequest {
+	referenceId := fmt.Sprintf("%s-%06d", i.Now().UTC().Format(timestampInRefIdFormat), data.DebitorId)
+
 	return concardis.PaymentLinkCreateRequest{
 		// TODO implement with help of configuration
 		Title:       "some page title",
 		Description: "some page description",
 		PSP:         1,
-		ReferenceId: fmt.Sprintf("144823ad-%06d", data.DebitorId),
+		ReferenceId: referenceId,
 		Purpose:     "some payment purpose",
 		Amount:      data.AmountDue,
 		VatRate:     data.VatRate,

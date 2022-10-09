@@ -142,7 +142,7 @@ func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
 	return cncrdapi.PaymentLinkDto{
 		Title:       "some page title",
 		Description: "some page description",
-		ReferenceId: "144823ad-000001",
+		ReferenceId: "221216-122218-000001",
 		Purpose:     "some payment purpose",
 		AmountDue:   390,
 		AmountPaid:  0,
