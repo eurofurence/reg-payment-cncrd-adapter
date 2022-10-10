@@ -7,6 +7,7 @@ import (
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/infoctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/paylinkctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
@@ -36,6 +37,7 @@ func CreateRouter(ctx context.Context) chi.Router {
 	// add your controllers here
 	paylinkctl.Create(server, paymentLinkService)
 	infoctl.Create(server)
+	fallbackctl.Create(server)
 	return server
 }
 

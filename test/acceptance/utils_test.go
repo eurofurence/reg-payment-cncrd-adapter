@@ -111,11 +111,10 @@ func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStat
 	}
 }
 
-func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expectedStatus int) {
+func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedBody cncrdapi.PaymentLinkDto) {
 	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
 	actualBody := cncrdapi.PaymentLinkDto{}
 	tstParseJson(response.body, &actualBody)
-	expectedBody := tstBuildValidPaymentLink()
 	require.EqualValues(t, expectedBody, actualBody)
 }
 
@@ -148,6 +147,17 @@ func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
+		Link:        "http://localhost:1111/some/paylink",
+	}
+}
+
+func tstBuildValidPaymentLinkGetResponse() cncrdapi.PaymentLinkDto {
+	return cncrdapi.PaymentLinkDto{
+		ReferenceId: "221216-122218-000001",
+		Purpose:     "some payment purpose",
+		AmountDue:   390,
+		AmountPaid:  0,
+		Currency:    "EUR",
 		Link:        "http://localhost:1111/some/paylink",
 	}
 }

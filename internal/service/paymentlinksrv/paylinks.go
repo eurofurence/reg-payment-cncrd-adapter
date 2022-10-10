@@ -73,3 +73,24 @@ func (i *Impl) apiResponseFromConcardisResponse(response concardis.PaymentLinkCr
 		Link:        response.Link,
 	}
 }
+
+func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error) {
+	data, err := concardis.Get().QueryPaymentLink(ctx, id)
+	if err != nil {
+		return cncrdapi.PaymentLinkDto{}, err
+	}
+
+	// TODO lots of missing fields, can we get them from downstream?
+
+	result := cncrdapi.PaymentLinkDto{
+		ReferenceId: data.ReferenceID,
+		Purpose:     data.Purpose,
+		AmountDue:   data.Amount,
+		AmountPaid:  0,
+		Currency:    data.Currency,
+		Link:        data.Link,
+	}
+
+	return result, nil
+}
+

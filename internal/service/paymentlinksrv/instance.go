@@ -1,6 +1,8 @@
 package paymentlinksrv
 
-import "time"
+import (
+	"time"
+)
 
 var NowFunc = time.Now
 

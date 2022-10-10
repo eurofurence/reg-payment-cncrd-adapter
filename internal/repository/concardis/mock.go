@@ -42,17 +42,21 @@ func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQu
 		return PaymentLinkQueryResponse{}, m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %d", id))
-	return PaymentLinkQueryResponse{
-		ID:          42,
-		Status:      "confirmed",
-		ReferenceID: "Order number of my online shop application",
-		Link:        "http://localhost:1111/some/paylink",
-		Name:        "Online-Shop payment #001",
-		Purpose:     "Shop Order #001",
-		Amount:      590,
-		Currency:    "EUR",
-		CreatedAt:   1418392958,
-	}, nil
+	if id == 42 {
+		return PaymentLinkQueryResponse{
+			ID:          42,
+			Status:      "confirmed",
+			ReferenceID: "221216-122218-000001",
+			Link:        "http://localhost:1111/some/paylink",
+			Name:        "Online-Shop payment #001",
+			Purpose:     "some payment purpose",
+			Amount:      390,
+			Currency:    "EUR",
+			CreatedAt:   1418392958,
+		}, nil
+	} else {
+		return PaymentLinkQueryResponse{}, NoSuchID404Error
+	}
 }
 
 func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
