@@ -64,7 +64,11 @@ func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
 		return m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("DeletePaymentLink %d", id))
-	return nil
+	if id == 42 {
+		return nil
+	} else {
+		return NoSuchID404Error
+	}
 }
 
 func (m *mockImpl) QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error) {

@@ -20,4 +20,7 @@ type PaymentLinkService interface {
 
 	// GetPaymentLink obtains the payment link information from the downstream api.
 	GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error)
+
+	// DeletePaymentLink asks the downstream api to delete the given payment link.
+	DeletePaymentLink(ctx context.Context, id uint) error
 }

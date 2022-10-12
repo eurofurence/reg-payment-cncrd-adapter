@@ -251,3 +251,110 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
 }
+
+// --- delete ---
+
+func TestDeletePaylink_Success(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a correct api token")
+	token := tstValidApiToken()
+
+	docs.When("when they attempt to delete an existing payment link")
+	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
+
+	docs.Then("then the request is successful and the response is as expected")
+	require.Equal(t, http.StatusNoContent, response.status)
+	require.Equal(t, "", response.body)
+
+	docs.Then("and the expected request for payment link deletion has been made")
+	tstRequireConcardisRecording(t,
+		"DeletePaymentLink 42",
+	)
+}
+
+func TestDeletePaylink_InvalidId(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a correct api token")
+	token := tstValidApiToken()
+
+	docs.When("when they attempt to delete a payment link but supply an invalid id")
+	response := tstPerformDelete("/api/rest/v1/paylinks/%2f%4c", token)
+
+	docs.Then("then the request fails with the appropriate error message")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "paylink.id.invalid", nil)
+
+	docs.Then("and no requests to the payment provider have been made")
+	require.Empty(t, concardisMock.Recording())
+}
+
+func TestDeletePaylink_NotFound(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a correct api token")
+	token := tstValidApiToken()
+
+	docs.When("when they attempt to delete a payment link but supply an id that does not exist")
+	response := tstPerformDelete("/api/rest/v1/paylinks/13", token)
+
+	docs.Then("then the request fails with the appropriate error message")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "paylink.id.notfound", nil)
+
+	docs.Then("and the expected request for payment link deletion has been made")
+	tstRequireConcardisRecording(t,
+		"DeletePaymentLink 13",
+	)
+}
+
+func TestDeletePaylink_Anonymous(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated caller")
+	token := tstNoToken()
+
+	docs.When("when they attempt to delete a payment link")
+	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and no requests to the payment provider have been made")
+	require.Empty(t, concardisMock.Recording())
+}
+
+func TestDeletePaylink_WrongToken(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a wrong api token")
+	token := tstInvalidApiToken()
+
+	docs.When("when they attempt to delete a payment link")
+	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) with the appropriate error message")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "invalid api token")
+
+	docs.Then("and no requests to the payment provider have been made")
+	require.Empty(t, concardisMock.Recording())
+}
+
+func TestDeletePaylink_DownstreamError(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a correct api token")
+	token := tstValidApiToken()
+
+	docs.When("when they attempt to delete a payment link while the downstream api is down")
+	concardisMock.SimulateError(concardis.DownstreamError)
+	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
+}

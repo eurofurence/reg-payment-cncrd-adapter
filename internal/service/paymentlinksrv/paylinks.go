@@ -94,3 +94,11 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 	return result, nil
 }
 
+func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
+	err := concardis.Get().DeletePaymentLink(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

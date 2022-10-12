@@ -80,6 +80,21 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, apiT
 	return tstWebResponseFromResponse(response)
 }
 
+func tstPerformDelete(relativeUrlWithLeadingSlash string, apiToken string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodDelete, ts.URL+relativeUrlWithLeadingSlash, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if apiToken != "" {
+		request.Header.Set(media.HeaderXApiKey, apiToken)
+	}
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return tstWebResponseFromResponse(response)
+}
+
 func tstRenderJson(v interface{}) string {
 	representationBytes, err := json.Marshal(v)
 	if err != nil {

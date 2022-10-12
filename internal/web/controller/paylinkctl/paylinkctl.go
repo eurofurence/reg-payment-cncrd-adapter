@@ -25,6 +25,7 @@ func Create(server chi.Router, paymentLinkSrv paymentlinksrv.PaymentLinkService)
 
 	server.Post("/api/rest/v1/paylinks", createPaylinkHandler)
 	server.Get("/api/rest/v1/paylinks/{id}", getPaylinkHandler)
+	server.Delete("/api/rest/v1/paylinks/{id}", deletePaylinkHandler)
 }
 
 func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +86,33 @@ func getPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func deletePaylinkHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !ctxvalues.HasApiToken(ctx) {
+		ctlutil.UnauthenticatedError(ctx, w, r, "you must be logged in for this operation", "anonymous access attempt")
+		return
+	}
+
+	id, err := idFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	err = paymentLinkService.DeletePaymentLink(ctx, id)
+	if err != nil {
+		if errors.Is(err, concardis.DownstreamError) {
+			downstreamErrorHandler(ctx, w, r, err)
+		} else if errors.Is(err, concardis.NoSuchID404Error) {
+			paylinkNotFoundErrorHandler(ctx, w, r, id)
+		} else {
+			ctlutil.UnexpectedError(ctx, w, r, err)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func parseBodyToPaymentLinkRequestDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (cncrdapi.PaymentLinkRequestDto, error) {
