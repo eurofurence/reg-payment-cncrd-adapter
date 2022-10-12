@@ -1,7 +1,8 @@
 package infoctl
 
 import (
-	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )
@@ -12,5 +13,6 @@ func Create(server chi.Router) {
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-	_, _ = fmt.Fprintf(w, "OK")
+	dto := cncrdapi.HealthReportDto{Status: "OK"}
+	ctlutil.WriteJson(r.Context(), w, dto)
 }

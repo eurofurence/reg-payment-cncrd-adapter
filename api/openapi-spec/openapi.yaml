@@ -12,8 +12,6 @@ info:
 servers:
   - url: /api/rest/v1
     description: localhost
-  - url: /attsrv/api/rest/v1
-    description: server
 tags:
   - name: paylinks
     description: Interface to the payment service
@@ -43,7 +41,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentLink'
+              $ref: '#/components/schemas/PaymentLinkRequest'
         required: true
       responses:
         '201':
@@ -64,13 +62,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: Authorization required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: You do not have permission to replay transactions
+          description: Authorization via API Token required
           content:
             application/json:
               schema:
@@ -82,7 +74,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached.
+          description: The Concardis backend could not be reached or returned an unexpected error.
           content:
             application/json:
               schema:
@@ -126,12 +118,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '403':
-          description: You do not have permission to see this payment link
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '404':
           description: Payment link not found
           content:
@@ -145,7 +131,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '502':
-          description: The Concardis backend could not be reached.
+          description: The Concardis backend could not be reached or returned an unexpected error.
           content:
             application/json:
               schema:
@@ -364,14 +350,44 @@ paths:
                 $ref: '#/components/schemas/HealthReport'
 components:
   schemas:
+    PaymentLinkRequest:
+      type: object
+      required:
+        - debitor_id
+        - amount_due
+        - currency
+        - vat_rate
+      properties:
+        debitor_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The badge number of the attendee. Will be used to build appropriate description, referenceId, etc.
+        amount_due:
+          type: integer
+          format: int64
+          minimum: 1
+          description: The amount to bill for. TODO - is this Cents or Euros?
+          example: 95
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: The currency to use.
+          example: EUR
+        vat_rate:
+          type: number
+          format: float
+          description: The applicable VAT, in percent.
+          example: 19.0
     PaymentLink:
       type: object
       required:
         - purpose
-        - referenceId
-        - amountDue
+        - reference_id
+        - amount_due
         - currency
-        - vatRate
+        - vat_rate
       properties:
         title:
           type: string
@@ -385,7 +401,7 @@ components:
           maxLength: 255
           description: The description to be shown on the payment page.
           example: Payment for Eurofurence 27 membership.
-        referenceId:
+        reference_id:
           type: string
           minLength: 1
           maxLength: 80
@@ -397,13 +413,13 @@ components:
           maxLength: 255
           description: The purpose of this payment process.
           example: Payment of Eurofurence 27 registration fee for CrystalFox.
-        amountDue:
+        amount_due:
           type: integer
           format: int64
           minimum: 1
           description: The amount to bill for. TODO - is this Cents or Euros?
           example: 95
-        amountPaid:
+        amount_paid:
           type: integer
           format: int64
           minimum: 0
@@ -415,7 +431,7 @@ components:
           maxLength: 3
           description: The currency to use.
           example: EUR
-        vatRate:
+        vat_rate:
           type: number
           format: float
           description: The applicable VAT, in percent.
@@ -424,7 +440,7 @@ components:
           type: string
           minLength: 1
           maxLength: 255
-          description: They payment link.
+          description: The payment link.
           example: https://instancename.pay-link.eu/?payment=382c85eab7a86278e3c3b06a23af2358
     WebhookEvent:
       type: object
@@ -485,7 +501,7 @@ components:
           type: string
           description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
           example: a8b7c6d5
-        messsage:
+        message:
           type: string
           description: |-
             A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
@@ -497,12 +513,19 @@ components:
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
+            - paylink.downstream.error (downstream api failure)
+            - unexpected (an unexpected error)
           example: paylink.data.invalid
         details:
-          type: array
-          items:
-            type: string
-          description: Optional list of additional details about the error. If available, will usually contain English language technobabble.
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Optional additional details about the error. If available, will usually contain English language technobabble.
+          example:
+            some_key: ["some English language technobabble that may or may not help you"]
+            currency: ["configuration only allows CHF,EUR"]
   securitySchemes:
     ApiKeyAuth:
       type: apiKey

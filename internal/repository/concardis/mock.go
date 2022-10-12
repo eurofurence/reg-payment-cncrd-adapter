@@ -1,0 +1,93 @@
+package concardis
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+type Mock interface {
+	ConcardisDownstream
+
+	Reset()
+	Recording() []string
+	SimulateError(err error)
+}
+
+type mockImpl struct {
+	recording     []string
+	simulateError error
+}
+
+func newMock() Mock {
+	return &mockImpl{
+		recording: make([]string, 0),
+	}
+}
+
+func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCreateRequest) (PaymentLinkCreated, error) {
+	if m.simulateError != nil {
+		return PaymentLinkCreated{}, m.simulateError
+	}
+	m.recording = append(m.recording, fmt.Sprintf("CreatePaymentLink %v", request))
+	return PaymentLinkCreated{
+		ID:          42,
+		ReferenceID: request.ReferenceId,
+		Link:        "http://localhost:1111/some/paylink",
+	}, nil
+}
+
+func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryResponse, error) {
+	if m.simulateError != nil {
+		return PaymentLinkQueryResponse{}, m.simulateError
+	}
+	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %d", id))
+	if id == 42 {
+		return PaymentLinkQueryResponse{
+			ID:          42,
+			Status:      "confirmed",
+			ReferenceID: "221216-122218-000001",
+			Link:        "http://localhost:1111/some/paylink",
+			Name:        "Online-Shop payment #001",
+			Purpose:     "some payment purpose",
+			Amount:      390,
+			Currency:    "EUR",
+			CreatedAt:   1418392958,
+		}, nil
+	} else {
+		return PaymentLinkQueryResponse{}, NoSuchID404Error
+	}
+}
+
+func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
+	if m.simulateError != nil {
+		return m.simulateError
+	}
+	m.recording = append(m.recording, fmt.Sprintf("DeletePaymentLink %d", id))
+	if id == 42 {
+		return nil
+	} else {
+		return NoSuchID404Error
+	}
+}
+
+func (m *mockImpl) QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error) {
+	if m.simulateError != nil {
+		return []TransactionData{}, m.simulateError
+	}
+	m.recording = append(m.recording, fmt.Sprintf("QueryTransactions %v <= t <= %v", timeGreaterThan, timeLessThan))
+	return []TransactionData{}, nil
+}
+
+func (m *mockImpl) Reset() {
+	m.recording = make([]string, 0)
+	m.simulateError = nil
+}
+
+func (m *mockImpl) Recording() []string {
+	return m.recording
+}
+
+func (m *mockImpl) SimulateError(err error) {
+	m.simulateError = err
+}

@@ -9,7 +9,9 @@ type serverConfig struct {
 }
 
 type downstreamConfig struct {
-	PaymentService string `yaml:"payment_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	PaymentService      string `yaml:"payment_service"`      // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	ConcardisDownstream string `yaml:"concardis_downstream"` // base url, usually https://api.pay-link.eu, will use in-memory-mock if unset
+	ConcardisInstance   string `yaml:"concardis_instance"`   // your instance name, required
 }
 
 type loggingConfig struct {

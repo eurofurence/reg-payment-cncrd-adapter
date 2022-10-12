@@ -6,7 +6,10 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/infoctl"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/paylinkctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
 	"net"
@@ -28,8 +31,13 @@ func CreateRouter(ctx context.Context) chi.Router {
 	server.Use(middleware.CorsHandling)
 	server.Use(middleware.TokenValidator)
 
+	// add your business logic services here
+	paymentLinkService := paymentlinksrv.New()
+
 	// add your controllers here
+	paylinkctl.Create(server, paymentLinkService)
 	infoctl.Create(server)
+	fallbackctl.Create(server)
 	return server
 }
 
