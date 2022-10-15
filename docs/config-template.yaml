@@ -5,5 +5,6 @@ logging:
 security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token'
+    webhook: 'put_secure_random_string_here_for_webhook'
   # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
   disable_cors: false

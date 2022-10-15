@@ -49,6 +49,7 @@ func TestParseAndOverwriteDefaults(t *testing.T) {
 security:
   fixed_token:
     api: 'fixed-testing-token-abc'
+    webhook: 'fixed-webhook-token-abc'
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

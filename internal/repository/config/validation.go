@@ -43,6 +43,7 @@ func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
 
 func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	checkLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
+	checkLength(&errs, 8, 64, "security.fixed.webhook", c.Fixed.Webhook)
 }
 
 const downstreamPattern = "^(|https?://.*[^/])$"
