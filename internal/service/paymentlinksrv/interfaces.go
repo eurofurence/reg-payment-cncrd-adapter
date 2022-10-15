@@ -2,6 +2,7 @@ package paymentlinksrv
 
 import (
 	"context"
+	"errors"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"net/url"
 )
@@ -23,4 +24,11 @@ type PaymentLinkService interface {
 
 	// DeletePaymentLink asks the downstream api to delete the given payment link.
 	DeletePaymentLink(ctx context.Context, id uint) error
+
+	// HandleWebhook requests the payment link referenced in the webhook data and reacts to any new payments
+	HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventDto) error
 }
+
+var (
+	WebhookValidationErr = errors.New("webhook referenced invalid invoice id, must be positive integer")
+)

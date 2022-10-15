@@ -19,7 +19,8 @@ type loggingConfig struct {
 }
 
 type fixedTokenConfig struct {
-	Api string `yaml:"api"` // shared-secret for server-to-server backend authentication
+	Api     string `yaml:"api"`     // shared-secret for server-to-server backend authentication
+	Webhook string `yaml:"webhook"` // shared-secret for the webhook coming in from concardis
 }
 
 type securityConfig struct {
