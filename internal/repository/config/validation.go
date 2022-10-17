@@ -52,6 +52,11 @@ func validateDownstreamConfiguration(errs url.Values, c downstreamConfig) {
 	if violatesPattern(downstreamPattern, c.PaymentService) {
 		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
+	if violatesPattern(downstreamPattern, c.ConcardisDownstream) {
+		errs.Add("downstream.concardis_downstream", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
+	checkLength(&errs, 1, 256, "downstream.concardis_instance", c.ConcardisInstance)
+	checkLength(&errs, 1, 256, "downstream.concardis_api_secret", c.ConcardisApiSecret)
 }
 
 // -- helpers

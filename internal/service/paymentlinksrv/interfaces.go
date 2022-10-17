@@ -17,7 +17,7 @@ type PaymentLinkService interface {
 	// CreatePaymentLink expects an already validated cncrdapi.PaymentLinkRequestDto, and makes a downstream
 	// request to create a payment link, returning the cncrdapi.PaymentLinkDto with all its information and the
 	// id under which to manage the payment link.
-	CreatePaymentLink(ctx context.Context, request cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, int64, error)
+	CreatePaymentLink(ctx context.Context, request cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, uint, error)
 
 	// GetPaymentLink obtains the payment link information from the downstream api.
 	GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error)

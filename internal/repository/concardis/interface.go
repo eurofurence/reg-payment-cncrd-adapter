@@ -17,6 +17,7 @@ type ConcardisDownstream interface {
 var (
 	NoSuchID404Error = errors.New("payment link id not found")
 	DownstreamError  = errors.New("downstream unavailable - see log for details")
+	NotSuccessful    = errors.New("response body status field did not indicate success")
 )
 
 // -- CreatePaymentLink --
@@ -27,14 +28,14 @@ type PaymentLinkCreateRequest struct {
 	PSP         uint64  `json:"psp"`
 	ReferenceId string  `json:"referenceId"`
 	Purpose     string  `json:"purpose"`
-	Amount      int64   `json:"amount"` // TODO is this cents?
-	VatRate     float64 `json:"vatRate"`
+	Amount      int64   `json:"amount"`  // in cents
+	VatRate     float64 `json:"vatRate"` // in %
 	Currency    string  `json:"currency"`
 	SKU         string  `json:"sku"`
 }
 
 type PaymentLinkCreated struct {
-	ID          int64  `json:"id"`
+	ID          uint   `json:"id"`
 	ReferenceID string `json:"referenceId"`
 	Link        string `json:"link"`
 }
@@ -42,15 +43,21 @@ type PaymentLinkCreated struct {
 // -- QueryPaymentLink --
 
 type PaymentLinkQueryResponse struct {
-	ID          int64  `json:"id"`
-	Status      string `json:"status"`
-	ReferenceID string `json:"referenceId"`
-	Link        string `json:"link"`
-	Name        string `json:"name"`
-	Purpose     string `json:"purpose"`
-	Amount      int64  `json:"amount"`
-	Currency    string `json:"currency"`
-	CreatedAt   int64  `json:"createdAt"`
+	ID          uint                 `json:"id"` // not the payment link id!
+	Status      string               `json:"status"`
+	ReferenceID string               `json:"referenceId"`
+	Link        string               `json:"link"`
+	Invoices    []PaymentLinkInvoice `json:"invoices"`
+	Name        string               `json:"name"`
+	Purpose     map[string]string    `json:"purpose"`
+	Amount      int64                `json:"amount"`
+	Currency    string               `json:"currency"`
+	CreatedAt   int64                `json:"createdAt"`
+}
+
+type PaymentLinkInvoice struct {
+	ReferenceID      string `json:"referenceId"`
+	PaymentRequestId uint   `json:"paymentRequestId"` // the payment link id
 }
 
 // -- QueryTransactions --

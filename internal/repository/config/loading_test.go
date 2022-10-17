@@ -50,6 +50,9 @@ security:
   fixed_token:
     api: 'fixed-testing-token-abc'
     webhook: 'fixed-webhook-token-abc'
+downstream:
+  concardis_instance: 'my-demo-instance'
+  concardis_api_secret: 'my-demo-secret'
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

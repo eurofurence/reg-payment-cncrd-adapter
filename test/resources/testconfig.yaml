@@ -2,3 +2,6 @@ security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token_test_token'
     webhook: 'demosecret'
+downstream:
+  concardis_instance: 'myinstance'
+  concardis_api_secret: 'mydemosecret'

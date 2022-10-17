@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 )
@@ -25,6 +26,10 @@ func (i *Impl) Run() int {
 	setLoglevel(config.LoggingSeverity())
 
 	if err := paymentservice.Create(); err != nil {
+		return 1
+	}
+
+	if err := concardis.Create(); err != nil {
 		return 1
 	}
 

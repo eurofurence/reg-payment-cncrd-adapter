@@ -49,7 +49,7 @@ func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQu
 			ReferenceID: "221216-122218-000001",
 			Link:        "http://localhost:1111/some/paylink",
 			Name:        "Online-Shop payment #001",
-			Purpose:     "some payment purpose",
+			Purpose:     map[string]string{"1": "some payment purpose"},
 			Amount:      390,
 			Currency:    "EUR",
 			CreatedAt:   1418392958,

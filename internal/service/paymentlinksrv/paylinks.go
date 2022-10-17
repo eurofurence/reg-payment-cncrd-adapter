@@ -31,7 +31,7 @@ func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.Pay
 	}
 }
 
-func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, int64, error) {
+func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, uint, error) {
 	concardisRequest := i.concardisCreateRequestFromApiRequest(data)
 	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
 	if err != nil {
@@ -84,7 +84,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 
 	result := cncrdapi.PaymentLinkDto{
 		ReferenceId: data.ReferenceID,
-		Purpose:     data.Purpose,
+		Purpose:     data.Purpose["1"],
 		AmountDue:   data.Amount,
 		AmountPaid:  0,
 		Currency:    data.Currency,
