@@ -64,14 +64,12 @@ type WebhookEventDto struct {
 // WebhookEventTransaction struct for WebhookEventTransaction
 type WebhookEventTransaction struct {
 	// Id of the transaction.
-	Id                   int64                          `json:"id"`
-	Invoice              WebhookEventTransactionInvoice `json:"invoice"`
-	AdditionalProperties map[string]interface{}
+	Id      int64                          `json:"id"`
+	Invoice WebhookEventTransactionInvoice `json:"invoice"`
 }
 
 // WebhookEventTransactionInvoice struct for WebhookEventTransactionInvoice
 type WebhookEventTransactionInvoice struct {
 	// Id of the payment link concerned.
-	Number               string `json:"number"`
-	AdditionalProperties map[string]interface{}
+	Number string `json:"number"`
 }

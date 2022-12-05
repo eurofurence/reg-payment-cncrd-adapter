@@ -198,7 +198,7 @@ paths:
     post:
       tags:
         - paylinks
-      summary: Refund payments by paylink id
+      summary: Refund payments by paylink id (NOT YET IMPLEMENTED)
       description: |-
         Refund all payments made using the references paylink.
       operationId: refundPaymentLinkById
@@ -276,8 +276,26 @@ paths:
       responses:
         '200':
           description: Successfully received
+        '400':
+          description: Invalid json body supplied or reference to invoice id (paylink id) did not resolve
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: You failed to pass the correct secret
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: An unexpected error occurred. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The Concardis backend could not be reached (but then who is calling this webhook?)
           content:
             application/json:
               schema:
@@ -511,9 +529,12 @@ components:
             - paylink.data.invalid (field data failed to validate, see details for more information)
             - paylink.id.notfound (no such paylink number in the Concardis service)
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
+            - paylink.downstream.error (downstream api failure)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
-            - paylink.downstream.error (downstream api failure)
+            - webhook.parse.error (json body parse error)
+            - webhook.data.invalid (syntactically invalid invoice number, must be positive integer)
+            - webhook.downstream.error (downstream api failure)
             - unexpected (an unexpected error)
           example: paylink.data.invalid
         details:

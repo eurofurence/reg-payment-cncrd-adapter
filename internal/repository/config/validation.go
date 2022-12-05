@@ -43,6 +43,7 @@ func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
 
 func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	checkLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
+	checkLength(&errs, 8, 64, "security.fixed.webhook", c.Fixed.Webhook)
 }
 
 const downstreamPattern = "^(|https?://.*[^/])$"
@@ -51,6 +52,11 @@ func validateDownstreamConfiguration(errs url.Values, c downstreamConfig) {
 	if violatesPattern(downstreamPattern, c.PaymentService) {
 		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
+	if violatesPattern(downstreamPattern, c.ConcardisDownstream) {
+		errs.Add("downstream.concardis_downstream", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
+	checkLength(&errs, 1, 256, "downstream.concardis_instance", c.ConcardisInstance)
+	checkLength(&errs, 1, 256, "downstream.concardis_api_secret", c.ConcardisApiSecret)
 }
 
 // -- helpers

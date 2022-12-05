@@ -51,3 +51,11 @@ func ConcardisDownstreamBaseUrl() string {
 func ConcardisInstanceName() string {
 	return Configuration().Downstream.ConcardisInstance
 }
+
+func ConcardisInstanceApiSecret() string {
+	return Configuration().Downstream.ConcardisApiSecret
+}
+
+func WebhookSecret() string {
+	return Configuration().Security.Fixed.Webhook
+}

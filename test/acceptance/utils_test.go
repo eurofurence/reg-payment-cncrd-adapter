@@ -176,3 +176,25 @@ func tstBuildValidPaymentLinkGetResponse() cncrdapi.PaymentLinkDto {
 		Link:        "http://localhost:1111/some/paylink",
 	}
 }
+
+func tstBuildValidWebhookRequest() string {
+	return `
+{
+   "transaction": {
+       "id": 1892362736,
+       "invoice": {
+           "number": "42",
+           "still": "more stuff"
+       },
+       "more": "stuff"
+   },
+   "otherField1": [
+       42
+   ],
+   "otherField2": {
+       "something": true,
+       "or_other": "thing"
+   }
+}
+`
+}
