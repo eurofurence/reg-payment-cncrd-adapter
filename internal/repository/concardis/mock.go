@@ -138,5 +138,22 @@ func (m *mockImpl) SimulateError(err error) {
 }
 
 func (m *mockImpl) InjectTransaction(tx TransactionData) {
+	newId := int64(atomic.AddUint32(&m.idSequence, 1))
+	tx.ID = newId
 	m.simulatorTx = append(m.simulatorTx, tx)
+
+	// add transaction to paylink
+	for id, paylink := range m.simulatorData {
+		if paylink.ReferenceID == tx.ReferenceID {
+			paylink.Invoices = make([]PaymentLinkInvoice, 1)
+			paylink.Invoices[0] = PaymentLinkInvoice{
+				ReferenceID:      tx.ReferenceID,
+				PaymentRequestId: id,
+				Currency:         paylink.Currency,
+				Amount:           paylink.Amount,
+				Transactions:     []TransactionData{tx},
+			}
+			m.simulatorData[id] = paylink
+		}
+	}
 }
