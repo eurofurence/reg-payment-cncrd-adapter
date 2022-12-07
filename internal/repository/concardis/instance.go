@@ -12,7 +12,7 @@ func Create() (err error) {
 		activeInstance, err = newClient()
 		return err
 	} else {
-		aulogging.Logger.NoCtx().Warn().Print("downstream.concardis_url not configured. Using in-memory simulator for concardis downstream (not useful for production!)")
+		aulogging.Logger.NoCtx().Warn().Print("service.concardis_url not configured. Using in-memory simulator for concardis downstream (not useful for production!)")
 		activeInstance = newMock()
 		return nil
 	}
