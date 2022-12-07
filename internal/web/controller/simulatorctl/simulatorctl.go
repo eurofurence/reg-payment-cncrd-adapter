@@ -67,7 +67,8 @@ func useSimulator(w http.ResponseWriter, r *http.Request) {
 		Transaction: cncrdapi.WebhookEventTransaction{
 			Id: tx.ID,
 			Invoice: cncrdapi.WebhookEventTransactionInvoice{
-				Number: fmt.Sprintf("%d", id),
+				ReferenceId:      paylink.ReferenceId,
+				PaymentRequestId: int64(id),
 			},
 		},
 	}

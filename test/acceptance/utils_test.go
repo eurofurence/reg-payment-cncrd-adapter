@@ -183,7 +183,8 @@ func tstBuildValidWebhookRequest() string {
    "transaction": {
        "id": 1892362736,
        "invoice": {
-           "number": "42",
+           "paymentRequestId": 42,
+           "referenceId": "221216-122218-000001",
            "still": "more stuff"
        },
        "more": "stuff"
