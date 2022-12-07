@@ -3,6 +3,8 @@ package concardis
 import (
 	"context"
 	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"sync/atomic"
 	"time"
 )
 
@@ -12,16 +14,45 @@ type Mock interface {
 	Reset()
 	Recording() []string
 	SimulateError(err error)
+	InjectTransaction(tx TransactionData)
 }
 
 type mockImpl struct {
 	recording     []string
 	simulateError error
+	simulatorData map[uint]PaymentLinkQueryResponse
+	idSequence    uint32
+	simulatorTx   []TransactionData
 }
 
 func newMock() Mock {
+	simData := make(map[uint]PaymentLinkQueryResponse)
+	// used by some testcases
+	simData[42] = PaymentLinkQueryResponse{
+		ID:          42,
+		Status:      "confirmed",
+		ReferenceID: "221216-122218-000001",
+		Link:        constructSimulatedPaylink("221216-122218-000001"),
+		Name:        "Online-Shop payment #001",
+		Purpose:     map[string]string{"1": "some payment purpose"},
+		Amount:      390,
+		Currency:    "EUR",
+		CreatedAt:   1418392958,
+	}
 	return &mockImpl{
-		recording: make([]string, 0),
+		recording:     make([]string, 0),
+		simulatorData: simData,
+		simulatorTx:   make([]TransactionData, 0),
+		idSequence:    100,
+	}
+}
+
+func constructSimulatedPaylink(referenceId string) string {
+	baseUrl := config.ServicePublicURL()
+	if baseUrl == "" {
+		return "http://localhost:1111/some/paylink/" + referenceId
+	} else {
+		return baseUrl + "/simulator/" + referenceId
 	}
 }
 
@@ -30,11 +61,26 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 		return PaymentLinkCreated{}, m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("CreatePaymentLink %v", request))
-	return PaymentLinkCreated{
-		ID:          42,
+
+	newId := uint(atomic.AddUint32(&m.idSequence, 1))
+	response := PaymentLinkCreated{
+		ID:          newId,
 		ReferenceID: request.ReferenceId,
-		Link:        "http://localhost:1111/some/paylink",
-	}, nil
+		Link:        constructSimulatedPaylink(request.ReferenceId),
+	}
+	data := PaymentLinkQueryResponse{
+		ID:          newId,
+		Status:      "confirmed",
+		ReferenceID: request.ReferenceId,
+		Link:        response.Link,
+		Name:        "Online-Shop payment #001",
+		Purpose:     map[string]string{"1": "some payment purpose"},
+		Amount:      request.Amount,
+		Currency:    request.Currency,
+		CreatedAt:   1418392958,
+	}
+	m.simulatorData[newId] = data
+	return response, nil
 }
 
 func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryResponse, error) {
@@ -42,21 +88,12 @@ func (m *mockImpl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQu
 		return PaymentLinkQueryResponse{}, m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("QueryPaymentLink %d", id))
-	if id == 42 {
-		return PaymentLinkQueryResponse{
-			ID:          42,
-			Status:      "confirmed",
-			ReferenceID: "221216-122218-000001",
-			Link:        "http://localhost:1111/some/paylink",
-			Name:        "Online-Shop payment #001",
-			Purpose:     map[string]string{"1": "some payment purpose"},
-			Amount:      390,
-			Currency:    "EUR",
-			CreatedAt:   1418392958,
-		}, nil
-	} else {
+
+	copiedData, ok := m.simulatorData[id]
+	if !ok {
 		return PaymentLinkQueryResponse{}, NoSuchID404Error
 	}
+	return copiedData, nil
 }
 
 func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
@@ -64,11 +101,13 @@ func (m *mockImpl) DeletePaymentLink(ctx context.Context, id uint) error {
 		return m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("DeletePaymentLink %d", id))
-	if id == 42 {
-		return nil
-	} else {
+
+	_, ok := m.simulatorData[id]
+	if !ok {
 		return NoSuchID404Error
 	}
+	delete(m.simulatorData, id)
+	return nil
 }
 
 func (m *mockImpl) QueryTransactions(ctx context.Context, timeGreaterThan time.Time, timeLessThan time.Time) ([]TransactionData, error) {
@@ -76,7 +115,13 @@ func (m *mockImpl) QueryTransactions(ctx context.Context, timeGreaterThan time.T
 		return []TransactionData{}, m.simulateError
 	}
 	m.recording = append(m.recording, fmt.Sprintf("QueryTransactions %v <= t <= %v", timeGreaterThan, timeLessThan))
-	return []TransactionData{}, nil
+
+	copiedTransactions := make([]TransactionData, len(m.simulatorTx))
+	for k, v := range m.simulatorTx {
+		// time matching not implemented because it interferes with our tests
+		copiedTransactions[k] = v
+	}
+	return copiedTransactions, nil
 }
 
 func (m *mockImpl) Reset() {
@@ -90,4 +135,8 @@ func (m *mockImpl) Recording() []string {
 
 func (m *mockImpl) SimulateError(err error) {
 	m.simulateError = err
+}
+
+func (m *mockImpl) InjectTransaction(tx TransactionData) {
+	m.simulatorTx = append(m.simulatorTx, tx)
 }

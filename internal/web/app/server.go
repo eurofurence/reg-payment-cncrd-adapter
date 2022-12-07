@@ -10,6 +10,7 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/infoctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/paylinkctl"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/simulatorctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/webhookctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
@@ -38,6 +39,10 @@ func CreateRouter(ctx context.Context) chi.Router {
 	// add your controllers here
 	paylinkctl.Create(server, paymentLinkService)
 	webhookctl.Create(server, paymentLinkService)
+	if config.ServicePublicURL() != "" {
+		aulogging.Logger.NoCtx().Warn().Printf("service.public_url is configured. Enabling local paylink simulator at %s/simulator (not useful for production!)", config.ServicePublicURL())
+		simulatorctl.Create(server, paymentLinkService)
+	}
 	infoctl.Create(server)
 	fallbackctl.Create(server)
 	return server
