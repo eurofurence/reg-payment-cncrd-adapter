@@ -222,7 +222,7 @@ func TestConcardisApiClient(t *testing.T) {
 	// This uses the repository on the consumer side to make the http call, should be as low level as possible
 	var test = func() (err error) {
 		// override configuration with pact server url
-		config.Configuration().Downstream.ConcardisDownstream = fmt.Sprintf("http://localhost:%d", pact.Server.Port)
+		config.Configuration().Service.ConcardisDownstream = fmt.Sprintf("http://localhost:%d", pact.Server.Port)
 
 		// set up downstream client
 		err = concardis.Create()

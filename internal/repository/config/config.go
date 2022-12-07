@@ -24,6 +24,10 @@ func ServerWriteTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.WriteTimeout)
 }
 
+func ServicePublicURL() string {
+	return Configuration().Service.PublicURL
+}
+
 func ServerIdleTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
@@ -37,23 +41,23 @@ func FixedApiToken() string {
 }
 
 func IsCorsDisabled() bool {
-	return Configuration().Security.DisableCors
+	return Configuration().Security.Cors.DisableCors
 }
 
 func PaymentServiceBaseUrl() string {
-	return Configuration().Downstream.PaymentService
+	return Configuration().Service.PaymentService
 }
 
 func ConcardisDownstreamBaseUrl() string {
-	return Configuration().Downstream.ConcardisDownstream
+	return Configuration().Service.ConcardisDownstream
 }
 
 func ConcardisInstanceName() string {
-	return Configuration().Downstream.ConcardisInstance
+	return Configuration().Service.ConcardisInstance
 }
 
 func ConcardisInstanceApiSecret() string {
-	return Configuration().Downstream.ConcardisApiSecret
+	return Configuration().Service.ConcardisApiSecret
 }
 
 func WebhookSecret() string {
