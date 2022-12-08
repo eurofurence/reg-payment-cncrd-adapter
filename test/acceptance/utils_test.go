@@ -162,7 +162,7 @@ func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
-		Link:        "http://localhost:1111/some/paylink",
+		Link:        "http://localhost:1111/some/paylink/221216-122218-000001",
 	}
 }
 
@@ -173,7 +173,7 @@ func tstBuildValidPaymentLinkGetResponse() cncrdapi.PaymentLinkDto {
 		AmountDue:   390,
 		AmountPaid:  0,
 		Currency:    "EUR",
-		Link:        "http://localhost:1111/some/paylink",
+		Link:        "http://localhost:1111/some/paylink/221216-122218-000001",
 	}
 }
 
@@ -183,7 +183,8 @@ func tstBuildValidWebhookRequest() string {
    "transaction": {
        "id": 1892362736,
        "invoice": {
-           "number": "42",
+           "paymentRequestId": 42,
+           "referenceId": "221216-122218-000001",
            "still": "more stuff"
        },
        "more": "stuff"

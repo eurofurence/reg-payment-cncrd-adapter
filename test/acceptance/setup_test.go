@@ -43,7 +43,7 @@ func tstSetupConfig(configFilePath string) {
 }
 
 func tstSetupHttpTestServer() {
-	router := app.CreateRouter(context.Background())
+	router, _ := app.CreateRouter(context.Background())
 	ts = httptest.NewServer(router)
 }
 

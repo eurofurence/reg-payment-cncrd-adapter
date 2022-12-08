@@ -9,7 +9,7 @@ import (
 
 func TestServerAddrWithAddressAndPort(t *testing.T) {
 	docs.Description("ensure ServerAddr() returns the correct server address string, with address specified")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Address: "localhost",
 		Port:    1234,
 	}}
@@ -18,7 +18,7 @@ func TestServerAddrWithAddressAndPort(t *testing.T) {
 
 func TestServerAddrWithOnlyPort(t *testing.T) {
 	docs.Description("ensure ServerAddr() returns the correct server address string, with no address specified")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Port: 1234,
 	}}
 	require.Equal(t, ":1234", ServerAddr(), "unexpected server address string")
@@ -26,7 +26,7 @@ func TestServerAddrWithOnlyPort(t *testing.T) {
 
 func TestServerTimeouts(t *testing.T) {
 	docs.Description("ensure ServerRead/Write/IdleTimout() return the correct timeouts")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Address:      "localhost",
 		Port:         1234,
 		ReadTimeout:  13,

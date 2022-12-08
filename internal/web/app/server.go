@@ -6,10 +6,12 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/self"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/infoctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/paylinkctl"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/simulatorctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/controller/webhookctl"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
@@ -21,7 +23,7 @@ import (
 	"time"
 )
 
-func CreateRouter(ctx context.Context) chi.Router {
+func CreateRouter(ctx context.Context) (chi.Router, error) {
 	aulogging.Logger.NoCtx().Debug().Print("Setting up router")
 	server := chi.NewRouter()
 
@@ -38,9 +40,17 @@ func CreateRouter(ctx context.Context) chi.Router {
 	// add your controllers here
 	paylinkctl.Create(server, paymentLinkService)
 	webhookctl.Create(server, paymentLinkService)
+	if config.ServicePublicURL() != "" {
+		aulogging.Logger.NoCtx().Warn().Printf("service.public_url is configured. Enabling local paylink simulator at %s/simulator (not useful for production!)", config.ServicePublicURL())
+		err := self.Create()
+		if err != nil {
+			return server, err
+		}
+		simulatorctl.Create(server, paymentLinkService)
+	}
 	infoctl.Create(server)
 	fallbackctl.Create(server)
-	return server
+	return server, nil
 }
 
 func newServer(ctx context.Context, router chi.Router) *http.Server {
@@ -63,7 +73,10 @@ func runServerWithGracefulShutdown() error {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
-	handler := CreateRouter(ctx)
+	handler, err := CreateRouter(ctx)
+	if err != nil {
+		return err
+	}
 	srv := newServer(ctx, handler)
 
 	go func() {

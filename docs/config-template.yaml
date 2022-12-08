@@ -1,3 +1,14 @@
+service:
+  name: 'Registration Concardis Adapter'
+  # my own public URL, needed if you want the simulator to generate valid paylinks, leave unset for the very basic mock used in unit tests
+  # setting is completely ignored if you set concardis_downstream, because that turns off the simulator completely
+  public_url: 'http://localhost:10000/cncrdsrv' # do not add trailing /
+  # base url of the payment service, leave blank to use simple in-memory simulator (not useful for production)
+  payment_service: 'http://localhost:9092' # do not add trailing /
+  # base url for the concardis downstream, leave blank to use the local simulator (should set public_url or generated paylinks will not work)
+  # concardis_downstream: 'https://api.pay-link.eu'
+  concardis_instance: 'demo'
+  concardis_api_secret: 'demosecret'
 server:
   port: 9097
 logging:
@@ -6,5 +17,8 @@ security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token'
     webhook: 'put_secure_random_string_here_for_webhook'
-  # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
-  disable_cors: false
+  cors:
+    # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
+    disable: false
+    # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
+    allow_origin: 'http://localhost:8000,http://localhost:8001'

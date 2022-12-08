@@ -56,8 +56,11 @@ type PaymentLinkQueryResponse struct {
 }
 
 type PaymentLinkInvoice struct {
-	ReferenceID      string `json:"referenceId"`
-	PaymentRequestId uint   `json:"paymentRequestId"` // the payment link id
+	ReferenceID      string            `json:"referenceId"`
+	PaymentRequestId uint              `json:"paymentRequestId"` // the payment link id
+	Currency         string            `json:"currency"`
+	Amount           int64             `json:"amount"`
+	Transactions     []TransactionData `json:"transactions"`
 }
 
 // -- QueryTransactions --
@@ -65,6 +68,7 @@ type PaymentLinkInvoice struct {
 type TransactionData struct {
 	ID          int64   `json:"id"`
 	UUID        string  `json:"uuid"`
+	Amount      int64   `json:"amount"`
 	Status      string  `json:"status"`
 	Time        string  `json:"time"`
 	Lang        string  `json:"lang"`
@@ -82,7 +86,9 @@ type Payment struct {
 }
 
 type Invoice struct {
-	CurrencyAlpha3 string `json:"currencyAlpha3"`
-	ShippingAmount int64  `json:"shippingAmount"`
-	TotalAmount    int64  `json:"totalAmount"`
+	ReferenceID      string `json:"referenceId"`
+	PaymentRequestId uint   `json:"paymentRequestId"` // the payment link id
+	Currency         string `json:"currency"`
+	OriginalAmount   int64  `json:"originalAmount"`
+	RefundedAmount   int64  `json:"refundedAmount"`
 }

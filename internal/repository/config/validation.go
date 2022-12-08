@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-func setConfigurationDefaults(c *conf) {
+func setConfigurationDefaults(c *Application) {
 	if c.Server.Port == 0 {
 		c.Server.Port = 8080
 	}
@@ -24,9 +24,7 @@ func setConfigurationDefaults(c *conf) {
 	}
 }
 
-const portPattern = "^[1-9][0-9]{0,4}$"
-
-func validateServerConfiguration(errs url.Values, c serverConfig) {
+func validateServerConfiguration(errs url.Values, c ServerConfig) {
 	checkIntValueRange(&errs, 1024, 65535, "server.port", int(c.Port))
 	checkIntValueRange(&errs, 1, 300, "server.read_timeout_seconds", c.ReadTimeout)
 	checkIntValueRange(&errs, 1, 300, "server.write_timeout_seconds", c.WriteTimeout)
@@ -35,28 +33,34 @@ func validateServerConfiguration(errs url.Values, c serverConfig) {
 
 var allowedSeverities = []string{"DEBUG", "INFO", "WARN", "ERROR"}
 
-func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
+func validateLoggingConfiguration(errs url.Values, c LoggingConfig) {
 	if notInAllowedValues(allowedSeverities[:], c.Severity) {
 		errs.Add("logging.severity", "must be one of DEBUG, INFO, WARN, ERROR")
 	}
 }
 
-func validateSecurityConfiguration(errs url.Values, c securityConfig) {
+func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 	checkLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
 	checkLength(&errs, 8, 64, "security.fixed.webhook", c.Fixed.Webhook)
 }
 
 const downstreamPattern = "^(|https?://.*[^/])$"
 
-func validateDownstreamConfiguration(errs url.Values, c downstreamConfig) {
+func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	if violatesPattern(downstreamPattern, c.PaymentService) {
-		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+		errs.Add("service.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
 	if violatesPattern(downstreamPattern, c.ConcardisDownstream) {
-		errs.Add("downstream.concardis_downstream", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+		errs.Add("service.concardis_downstream", "base url must be empty (enables local simulator) or start with http:// or https:// and may not end in a /")
 	}
-	checkLength(&errs, 1, 256, "downstream.concardis_instance", c.ConcardisInstance)
-	checkLength(&errs, 1, 256, "downstream.concardis_api_secret", c.ConcardisApiSecret)
+	if violatesPattern(downstreamPattern, c.PublicURL) {
+		errs.Add("service.public_url", "public url must be empty or start with http:// or https:// and may not end in a /")
+	}
+	if c.ConcardisDownstream != "" && c.PublicURL != "" {
+		errs.Add("service.public_url", "cannot set both public_url (for simulated paylinks) and concardis_downstream (to talk to actual api). Make up your mind!")
+	}
+	checkLength(&errs, 1, 256, "service.concardis_instance", c.ConcardisInstance)
+	checkLength(&errs, 1, 256, "service.concardis_api_secret", c.ConcardisApiSecret)
 }
 
 // -- helpers

@@ -464,6 +464,7 @@ components:
       type: object
       required:
         - transaction
+      additionalProperties: true
       properties:
         transaction:
           type: object
@@ -481,16 +482,23 @@ components:
             invoice:
               type: object
               required:
-                - number
+                - referenceId
+                - paymentRequestId
               additionalProperties: true
               properties:
-                number:
+                referenceId:
                   type: string
                   minimum: 1
                   minLength: 1
                   maxLength: 80
-                  description: Id of the payment link concerned.
-                  example: "192653"
+                  description: reference id we used to create the payment link.
+                  example: ab23-1870ffe6-ca1778de7-0167
+                paymentRequestId:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  description: id of the payment link concerned.
+                  example: 42
     HealthReport:
       type: object
       required:

@@ -12,7 +12,7 @@ func Create() (err error) {
 		activeInstance, err = newClient()
 		return err
 	} else {
-		aulogging.Logger.NoCtx().Warn().Printf("downstream.payment_service not configured. Using in-memory simulator for payment service (not useful for production!)")
+		aulogging.Logger.NoCtx().Warn().Printf("service.payment_service not configured. Using in-memory simulator for payment service (not useful for production!)")
 		activeInstance = newMock()
 		return nil
 	}
