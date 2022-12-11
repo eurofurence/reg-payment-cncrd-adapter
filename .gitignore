@@ -4,3 +4,4 @@ config.yaml
 test/contract/*/logs/**
 payment-cncrd-adapter
 main
+.vscode/**
