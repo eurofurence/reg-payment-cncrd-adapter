@@ -6,16 +6,17 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/go-http-utils/headers"
-	"net/http"
-	"net/url"
-	"strings"
-	"time"
 )
 
 type Impl struct {
@@ -68,7 +69,11 @@ var FixedSignatureValue string
 
 const signatureKey = "ApiSignature"
 
-func encode(key string, value string) string {
+func pathEncode(key string, value string) string {
+	return url.PathEscape(key) + "=" + url.PathEscape(value)
+}
+
+func queryEncode(key string, value string) string {
 	return url.QueryEscape(key) + "=" + url.QueryEscape(value)
 }
 
@@ -87,7 +92,7 @@ func signRequest(unsignedRequest string, instanceApiSecret string) string {
 	}
 }
 
-func buildCreateRequestBody(request PaymentLinkCreateRequest) string {
+func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(key string, value string) string) string {
 	var buf strings.Builder
 	buf.WriteString(encode("title", request.Title) + "&")
 	buf.WriteString(encode("description", request.Description) + "&")
@@ -100,9 +105,18 @@ func buildCreateRequestBody(request PaymentLinkCreateRequest) string {
 	buf.WriteString(encode("sku", request.SKU) + "&")
 	buf.WriteString(encode("preAuthorization", "0") + "&")
 	buf.WriteString(encode("reservation", "0"))
-	unsigned := buf.String()
-	signature := signRequest(unsigned, config.ConcardisInstanceApiSecret())
-	return unsigned + "&" + encode(signatureKey, signature)
+	return buf.String()
+}
+
+func buildCreateRequestBody(request PaymentLinkCreateRequest) string {
+	// Note: the Concardis PayLink API uses PathEncoding for the Body,
+	// but QueryEncoding to calculate the signature. (don't ask)
+	// This is relevant for values with spaces, question marks, etc.
+	pathEncodedPayload := constructBufferWithEncoding(request, pathEncode)
+	queryEncodedPayloadForSigning := constructBufferWithEncoding(request, queryEncode)
+
+	signature := signRequest(queryEncodedPayloadForSigning, config.ConcardisInstanceApiSecret())
+	return pathEncodedPayload + "&" + queryEncode(signatureKey, signature)
 }
 
 func (i *Impl) CreatePaymentLink(ctx context.Context, request PaymentLinkCreateRequest) (PaymentLinkCreated, error) {
@@ -134,7 +148,7 @@ type queryLowlevelResponseBody struct {
 
 func buildEmptyRequestBody() string {
 	signature := signRequest("", config.ConcardisInstanceApiSecret())
-	return encode(signatureKey, signature)
+	return queryEncode(signatureKey, signature)
 }
 
 func (i *Impl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryResponse, error) {
