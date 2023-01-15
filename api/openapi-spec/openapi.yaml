@@ -371,11 +371,18 @@ components:
     PaymentLinkRequest:
       type: object
       required:
+        - reference_id
         - debitor_id
         - amount_due
         - currency
         - vat_rate
       properties:
+        reference_id:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Internal reference number for this payment process.
+          example: ab23-1870ffe6-ca1778de7-0167
         debitor_id:
           type: integer
           format: int64

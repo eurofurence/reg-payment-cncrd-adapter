@@ -63,3 +63,15 @@ func ConcardisInstanceApiSecret() string {
 func WebhookSecret() string {
 	return Configuration().Security.Fixed.Webhook
 }
+
+func InvoiceTitle() string {
+	return Configuration().Invoice.Title
+}
+
+func InvoiceDescription() string {
+	return Configuration().Invoice.Description
+}
+
+func InvoicePurpose() string {
+	return Configuration().Invoice.Purpose
+}

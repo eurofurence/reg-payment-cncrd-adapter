@@ -7,6 +7,7 @@ type (
 		Server   ServerConfig   `yaml:"server"`
 		Logging  LoggingConfig  `yaml:"logging"`
 		Security SecurityConfig `yaml:"security"`
+		Invoice  InvoiceConfig  `yaml:"invoice"`
 	}
 
 	// ServiceConfig contains configuration values
@@ -48,5 +49,12 @@ type (
 	// LoggingConfig configures logging
 	LoggingConfig struct {
 		Severity string `yaml:"severity"`
+	}
+
+	// InvoiceConfig defines what the invoices should look like
+	InvoiceConfig struct {
+		Title       string `yaml:"title:`
+		Description string `yaml:"description"`
+		Purpose     string `yaml:"purpose"`
 	}
 )

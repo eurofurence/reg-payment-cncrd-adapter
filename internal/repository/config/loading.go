@@ -3,12 +3,13 @@ package config
 import (
 	"errors"
 	"flag"
-	"github.com/StephanHCB/go-autumn-logging"
-	"gopkg.in/yaml.v2"
 	"net/url"
 	"os"
 	"sort"
 	"sync"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -51,6 +52,7 @@ func parseAndOverwriteConfig(yamlFile []byte, logPrintf func(format string, v ..
 	validateServerConfiguration(errs, newConfigurationData.Server)
 	validateSecurityConfiguration(errs, newConfigurationData.Security)
 	validateLoggingConfiguration(errs, newConfigurationData.Logging)
+	validateInvoiceConfiguration(errs, newConfigurationData.Invoice)
 
 	if len(errs) != 0 {
 		var keys []string
@@ -80,7 +82,9 @@ func loadConfiguration() error {
 		aulogging.Logger.NoCtx().Error().Printf("failed to load configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
-	err = parseAndOverwriteConfig(yamlFile, aulogging.Logger.NoCtx().Error().Printf)
+	err = parseAndOverwriteConfig(yamlFile, func(format string, v ...interface{}) {
+		aulogging.Logger.NoCtx().Error().Printf(format, v...)
+	})
 	return err
 }
 
