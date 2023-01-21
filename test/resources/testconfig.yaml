@@ -6,3 +6,7 @@ security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token_test_token'
     webhook: 'demosecret'
+invoice:
+  title: 'some page title'
+  description: 'some page description'
+  purpose: 'some payment purpose'
