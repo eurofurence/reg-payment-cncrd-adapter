@@ -8,11 +8,13 @@ import (
 
 type PaymentService interface {
 	AddTransaction(ctx context.Context, transaction Transaction) error
+	UpdateTransaction(ctx context.Context, transaction Transaction) error
+	GetTransactionByReferenceId(ctx context.Context, reference_id string) (Transaction, error)
 }
 
 var (
-	NoSuchDebitor404Error = errors.New("debitor id not found")
-	DownstreamError       = errors.New("downstream unavailable - see log for details")
+	NotFoundError   = errors.New("record id not found")
+	DownstreamError = errors.New("downstream unavailable - see log for details")
 )
 
 type TransactionType int
