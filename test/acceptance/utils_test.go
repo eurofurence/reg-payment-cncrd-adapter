@@ -2,16 +2,17 @@ package acceptance
 
 import (
 	"encoding/json"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
-	"github.com/go-http-utils/headers"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
+	"github.com/go-http-utils/headers"
+	"github.com/stretchr/testify/require"
 )
 
 // placing these here because they are package global
@@ -145,10 +146,11 @@ func tstRequireConcardisRecording(t *testing.T, expectedEntries ...string) {
 
 func tstBuildValidPaymentLinkRequest() cncrdapi.PaymentLinkRequestDto {
 	return cncrdapi.PaymentLinkRequestDto{
-		DebitorId: 1,
-		AmountDue: 390,
-		Currency:  "EUR",
-		VatRate:   19.0,
+		ReferenceId: "221216-122218-000001",
+		DebitorId:   1,
+		AmountDue:   390,
+		Currency:    "EUR",
+		VatRate:     19.0,
 	}
 }
 

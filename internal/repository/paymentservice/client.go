@@ -3,14 +3,16 @@ package paymentservice
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"time"
+
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/media"
-	"net/http"
-	"time"
 )
 
 type Impl struct {
@@ -49,7 +51,7 @@ func errByStatus(err error, status int) error {
 		return err
 	}
 	if status == http.StatusNotFound {
-		return NoSuchDebitor404Error
+		return NotFoundError
 	}
 	if status >= 300 {
 		return DownstreamError
@@ -62,4 +64,29 @@ func (i Impl) AddTransaction(ctx context.Context, transaction Transaction) error
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, transaction, &response)
 	return errByStatus(err, response.Status)
+}
+
+func (i Impl) UpdateTransaction(ctx context.Context, transaction Transaction) error {
+	url := fmt.Sprintf("%s/v1/transactions", i.baseUrl)
+	response := aurestclientapi.ParsedResponse{}
+	err := i.client.Perform(ctx, http.MethodPut, url, transaction, &response)
+	return errByStatus(err, response.Status)
+}
+
+func (i Impl) GetTransactionByReferenceId(ctx context.Context, reference_id string) (Transaction, error) {
+	url := fmt.Sprintf("%s/v1/transactions?transaction_identifier=%s", i.baseUrl, url.QueryEscape(reference_id))
+	bodyDto := TransactionResponse{}
+	response := aurestclientapi.ParsedResponse{
+		Body: &bodyDto,
+	}
+	err := i.client.Perform(ctx, http.MethodGet, url, reference_id, &response)
+
+	err = errByStatus(err, response.Status)
+	if len(bodyDto.Payload) == 0 {
+		if err == nil {
+			err = NotFoundError
+		}
+		return Transaction{}, err
+	}
+	return bodyDto.Payload[0], err
 }

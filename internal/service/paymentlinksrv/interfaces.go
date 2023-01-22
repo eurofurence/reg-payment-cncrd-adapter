@@ -3,8 +3,9 @@ package paymentlinksrv
 import (
 	"context"
 	"errors"
-	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"net/url"
+
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 )
 
 type PaymentLinkService interface {
@@ -30,5 +31,6 @@ type PaymentLinkService interface {
 }
 
 var (
-	WebhookValidationErr = errors.New("webhook referenced invalid invoice id, must be positive integer")
+	WebhookValidationErr    = errors.New("webhook referenced invalid invoice id, must be positive integer")
+	WebhookRefIdMismatchErr = errors.New("webhook reference_id differes from paylink reference_id")
 )

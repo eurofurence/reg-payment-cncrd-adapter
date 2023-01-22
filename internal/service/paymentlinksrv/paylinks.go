@@ -2,10 +2,11 @@ package paymentlinksrv
 
 import (
 	"context"
-	"fmt"
+	"net/url"
+
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
-	"net/url"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 )
 
 func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) url.Values {
@@ -41,18 +42,13 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkR
 	return output, concardisResponse.ID, nil
 }
 
-const timestampInRefIdFormat = "060102-150405"
-
 func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto) concardis.PaymentLinkCreateRequest {
-	referenceId := fmt.Sprintf("%s-%06d", i.Now().UTC().Format(timestampInRefIdFormat), data.DebitorId)
-
 	return concardis.PaymentLinkCreateRequest{
-		// TODO implement with help of configuration
-		Title:       "some page title",
-		Description: "some page description",
+		Title:       config.InvoiceTitle(),
+		Description: config.InvoiceDescription(),
 		PSP:         1,
-		ReferenceId: referenceId,
-		Purpose:     "some payment purpose",
+		ReferenceId: data.ReferenceId,
+		Purpose:     config.InvoicePurpose(),
 		Amount:      data.AmountDue,
 		VatRate:     data.VatRate,
 		Currency:    data.Currency,

@@ -63,6 +63,12 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	checkLength(&errs, 1, 256, "service.concardis_api_secret", c.ConcardisApiSecret)
 }
 
+func validateInvoiceConfiguration(errs url.Values, c InvoiceConfig) {
+	checkLength(&errs, 1, 256, "invoice.title", c.Title)
+	checkLength(&errs, 1, 256, "invoice.purpose", c.Purpose)
+	checkLength(&errs, 1, 256, "invoice.description", c.Description)
+}
+
 // -- helpers
 
 func violatesPattern(pattern string, value string) bool {

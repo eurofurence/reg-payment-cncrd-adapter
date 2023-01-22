@@ -14,10 +14,11 @@ type Mock interface {
 }
 
 type MockImpl struct {
-	data             map[uint][]Transaction
-	recording        []Transaction
-	simulateGetError error
-	simulateAddError error
+	data                map[uint][]Transaction
+	recording           []Transaction
+	simulateGetError    error
+	simulateAddError    error
+	simulateUpdateError error
 }
 
 var (
@@ -43,12 +44,32 @@ func (m *MockImpl) AddTransaction(ctx context.Context, transaction Transaction) 
 	return nil
 }
 
+func (m *MockImpl) UpdateTransaction(ctx context.Context, transaction Transaction) error {
+	if m.simulateUpdateError != nil {
+		return m.simulateUpdateError
+	}
+
+	_ = m.InjectTransaction(ctx, transaction)
+	m.recording = append(m.recording, transaction)
+
+	return nil
+}
+
+func (m *MockImpl) GetTransactionByReferenceId(ctx context.Context, refrence_id string) (Transaction, error) {
+	transaction := Transaction{
+		ID: "mock-transaction-id",
+	}
+
+	return transaction, nil
+}
+
 // only used in tests
 
 func (m *MockImpl) Reset() {
 	m.recording = make([]Transaction, 0)
 	m.simulateGetError = nil
 	m.simulateAddError = nil
+	m.simulateUpdateError = nil
 }
 
 func (m *MockImpl) Recording() []Transaction {

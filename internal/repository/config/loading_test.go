@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var recording []string
@@ -60,6 +61,9 @@ logging:
 	require.NotNil(t, err, "expected an error")
 	require.Equal(t, err.Error(), "configuration validation error", "unexpected error message")
 	require.EqualValues(t, []string{
+		"configuration error: invoice.description: invoice.description field must be at least 1 and at most 256 characters long",
+		"configuration error: invoice.purpose: invoice.purpose field must be at least 1 and at most 256 characters long",
+		"configuration error: invoice.title: invoice.title field must be at least 1 and at most 256 characters long",
 		"configuration error: logging.severity: must be one of DEBUG, INFO, WARN, ERROR",
 		"configuration error: security.fixed.api: security.fixed.api field must be at least 16 and at most 256 characters long",
 		"configuration error: security.fixed.webhook: security.fixed.webhook field must be at least 8 and at most 64 characters long",
@@ -82,6 +86,10 @@ security:
 service:
   concardis_instance: 'my-demo-instance'
   concardis_api_secret: 'my-demo-secret'
+invoice:
+  title: 'demo title'
+  description: 'demo description'
+  purpose: 'demo purpose'
 `
 	recording = make([]string, 0)
 	err := parseAndOverwriteConfig([]byte(minimalYaml), tstLogRecorder)

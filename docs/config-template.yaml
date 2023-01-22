@@ -9,6 +9,7 @@ service:
   # concardis_downstream: 'https://api.pay-link.eu'
   concardis_instance: 'demo'
   concardis_api_secret: 'demosecret'
+  concardis_downstream: 'https://api.pay-link.eu'
 server:
   port: 9097
 logging:
@@ -22,3 +23,10 @@ security:
     disable: false
     # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
     allow_origin: 'http://localhost:8000,http://localhost:8001'
+invoice:
+  title: Time Traveller Con 1969 Edition - Attendee Fee
+  description: |
+    Fee for attending Time Traveller Con 1969 Edition
+    from July 17th to 22nd 1969, including all selected options.
+    Accomodation and catgering will have been provided.
+  purpose: Payment of entrance fee and options.
