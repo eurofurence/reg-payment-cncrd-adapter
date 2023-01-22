@@ -80,5 +80,13 @@ func (i Impl) GetTransactionByReferenceId(ctx context.Context, reference_id stri
 		Body: &bodyDto,
 	}
 	err := i.client.Perform(ctx, http.MethodGet, url, reference_id, &response)
-	return bodyDto.Payload[0], errByStatus(err, response.Status)
+
+	err = errByStatus(err, response.Status)
+	if len(bodyDto.Payload) == 0 {
+		if err == nil {
+			err = NotFoundError
+		}
+		return Transaction{}, err
+	}
+	return bodyDto.Payload[0], err
 }

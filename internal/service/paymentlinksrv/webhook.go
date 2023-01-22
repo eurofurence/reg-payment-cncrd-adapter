@@ -13,6 +13,8 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 )
 
+const isoDateFormat = "2006-01-02"
+
 func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventDto) error {
 	aulogging.Logger.Ctx(ctx).Info().Printf("webhook id=%d invoice.paymentRequestId=%d invoice.referenceId=%s", webhook.Transaction.Id, webhook.Transaction.Invoice.PaymentRequestId, webhook.Transaction.Invoice.ReferenceId)
 
@@ -24,7 +26,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	paylink, err := concardis.Get().QueryPaymentLink(ctx, paylinkId)
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from concardis. err=%s", err)
+		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from concardis. err=%s", err.Error())
 		return err
 	}
 
@@ -46,7 +48,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 			return createTransaction(ctx, paylink)
 		} else {
-			aulogging.Logger.Ctx(ctx).Error().Printf("error fetching transaction from payment service. err=%s", err)
+			aulogging.Logger.Ctx(ctx).Error().Printf("error fetching transaction from payment service. err=%s", err.Error())
 			return err
 		}
 	}
@@ -63,6 +65,8 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 		// we log a warning, but we continue anyway
 	}
 
+	today := time.Now().Format(isoDateFormat)
+
 	transaction := paymentservice.Transaction{
 		ID:        paylink.ReferenceID,
 		DebitorID: debitor_id,
@@ -73,10 +77,10 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 			Currency:  paylink.Currency,
 			VatRate:   0,
 		},
-		Comment: "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
-		Status:  paymentservice.Pending,
-		// omitting EffectiveDate
-		DueDate: time.Now(),
+		Comment:       "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
+		Status:        paymentservice.Pending,
+		EffectiveDate: today, // XXX TODO: this might be in the payload
+		DueDate:       time.Now(),
 		// omitting Deletion
 	}
 
