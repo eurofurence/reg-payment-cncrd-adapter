@@ -1,7 +1,6 @@
 # reg-payment-cncrd-adapter
 
 <img src="https://github.com/eurofurence/reg-payment-cncrd-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
-<img src="https://github.com/eurofurence/reg-payment-cncrd-adapter/actions/workflows/codeql-analysis.yml/badge.svg" alt="code quality status"/>
 
 ## Overview
 
@@ -18,7 +17,7 @@ Command line arguments
 
 This service uses go modules to provide dependency management, see `go.mod`.
 
-If you place this repository outside of your GOPATH, build and test runs will download all required
+If you place this repository outside your GOPATH, build and test runs will download all required
 dependencies by default.
 
 ## Running on localhost
@@ -28,7 +27,7 @@ for operation with an in-memory database and sensible defaults.
 
 Build using `go build cmd/main.go`.
 
-Then run `./main -config config.yaml -migrate-database`.
+Then run `./main -config config.yaml`.
 
 ## Installation on the server
 
