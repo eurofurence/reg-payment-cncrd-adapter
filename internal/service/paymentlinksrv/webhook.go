@@ -80,7 +80,7 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 		Comment:       "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
 		Status:        paymentservice.Pending,
 		EffectiveDate: today, // XXX TODO: this might be in the payload
-		DueDate:       time.Now(),
+		DueDate:       today,
 		// omitting Deletion
 	}
 
