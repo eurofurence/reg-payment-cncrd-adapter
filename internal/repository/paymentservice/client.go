@@ -3,6 +3,8 @@ package paymentservice
 import (
 	"context"
 	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
 	"net/http"
 	"net/url"
 	"time"
@@ -22,6 +24,7 @@ type Impl struct {
 
 func requestManipulator(ctx context.Context, r *http.Request) {
 	r.Header.Add(media.HeaderXApiKey, config.FixedApiToken())
+	r.Header.Add(middleware.TraceIdHeader, ctxvalues.RequestId(ctx))
 }
 
 func newClient() (PaymentService, error) {
