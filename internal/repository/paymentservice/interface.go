@@ -17,30 +17,30 @@ var (
 	DownstreamError = errors.New("downstream unavailable - see log for details")
 )
 
-type TransactionType int
+type TransactionType string
 
 const (
-	Due TransactionType = iota
-	Payment
+	Due     TransactionType = "due"
+	Payment TransactionType = "payment"
 )
 
-type PaymentMethod int
+type PaymentMethod string
 
 const (
-	Credit PaymentMethod = iota
-	Paypal
-	Transfer
-	Internal
-	Gift
+	Credit   PaymentMethod = "credit"
+	Paypal   PaymentMethod = "paypal"
+	Transfer PaymentMethod = "transfer"
+	Internal PaymentMethod = "internal"
+	Gift     PaymentMethod = "gift"
 )
 
-type TransactionStatus int
+type TransactionStatus string
 
 const (
-	Pending TransactionStatus = iota
-	Tentative
-	Valid
-	Deleted
+	Tentative TransactionStatus = "tentative"
+	Pending   TransactionStatus = "pending"
+	Valid     TransactionStatus = "valid"
+	Deleted   TransactionStatus = "deleted"
 )
 
 type Deletion struct {
@@ -57,16 +57,17 @@ type Amount struct {
 }
 
 type Transaction struct {
-	ID            string
-	DebitorID     uint // TODO either this is a string everywhere or a uint everywhere
-	Type          TransactionType
-	Method        PaymentMethod
-	Amount        Amount
-	Comment       string
-	Status        TransactionStatus
-	EffectiveDate string
-	DueDate       time.Time
-	Deletion      *Deletion
+	ID              string            `json:"transaction_identifier"`
+	DebitorID       uint              `json:"debitor_id"` // XXX TODO this is an 'int64' in the payment service
+	Type            TransactionType   `json:"transaction_type"`
+	Method          PaymentMethod     `json:"method"`
+	Amount          Amount            `json:"amount"`
+	Comment         string            `json:"comment"`
+	Status          TransactionStatus `json:"status"`
+	PaymentStartUrl string            `json:"payment_start_url"`
+	EffectiveDate   string            `json:"effective_date"`
+	DueDate         string            `json:"due_date,omitempty"`
+	Deletion        *Deletion
 }
 
 type TransactionResponse struct {

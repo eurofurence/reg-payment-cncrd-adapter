@@ -3,6 +3,8 @@ package paymentservice
 import (
 	"context"
 	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/middleware"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
 	"net/http"
 	"net/url"
 	"time"
@@ -22,6 +24,7 @@ type Impl struct {
 
 func requestManipulator(ctx context.Context, r *http.Request) {
 	r.Header.Add(media.HeaderXApiKey, config.FixedApiToken())
+	r.Header.Add(middleware.TraceIdHeader, ctxvalues.RequestId(ctx))
 }
 
 func newClient() (PaymentService, error) {
@@ -60,21 +63,21 @@ func errByStatus(err error, status int) error {
 }
 
 func (i Impl) AddTransaction(ctx context.Context, transaction Transaction) error {
-	url := fmt.Sprintf("%s/v1/transactions", i.baseUrl)
+	url := fmt.Sprintf("%s/api/rest/v1/transactions", i.baseUrl)
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, transaction, &response)
 	return errByStatus(err, response.Status)
 }
 
 func (i Impl) UpdateTransaction(ctx context.Context, transaction Transaction) error {
-	url := fmt.Sprintf("%s/v1/transactions", i.baseUrl)
+	url := fmt.Sprintf("%s/api/rest/v1/transactions/%s", i.baseUrl, url.PathEscape(transaction.ID))
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPut, url, transaction, &response)
 	return errByStatus(err, response.Status)
 }
 
 func (i Impl) GetTransactionByReferenceId(ctx context.Context, reference_id string) (Transaction, error) {
-	url := fmt.Sprintf("%s/v1/transactions?transaction_identifier=%s", i.baseUrl, url.QueryEscape(reference_id))
+	url := fmt.Sprintf("%s/api/rest/v1/transactions?transaction_identifier=%s", i.baseUrl, url.QueryEscape(reference_id))
 	bodyDto := TransactionResponse{}
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
