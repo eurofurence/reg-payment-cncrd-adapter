@@ -3,6 +3,7 @@ package concardis
 import (
 	"context"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"sync/atomic"
 	"time"
@@ -32,7 +33,7 @@ func newMock() Mock {
 		ID:          42,
 		Status:      "confirmed",
 		ReferenceID: "221216-122218-000001",
-		Link:        constructSimulatedPaylink("221216-122218-000001"),
+		Link:        constructSimulatedPaylink("42"),
 		Name:        "Online-Shop payment #001",
 		Purpose:     map[string]string{"1": "some payment purpose"},
 		Amount:      390,
@@ -66,7 +67,7 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 	response := PaymentLinkCreated{
 		ID:          newId,
 		ReferenceID: request.ReferenceId,
-		Link:        constructSimulatedPaylink(request.ReferenceId),
+		Link:        constructSimulatedPaylink(fmt.Sprintf("%d", newId)),
 	}
 	data := PaymentLinkQueryResponse{
 		ID:          newId,
@@ -79,6 +80,9 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 		Currency:    request.Currency,
 		CreatedAt:   1418392958,
 	}
+
+	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s", newId, request.Amount, request.Currency)
+
 	m.simulatorData[newId] = data
 	return response, nil
 }

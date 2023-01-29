@@ -20,7 +20,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	paylinkId, err := idValidate(webhook.Transaction.Invoice.PaymentRequestId)
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Error().Printf("webhook called with invalid reference ID. id=%s", webhook.Transaction.Invoice.PaymentRequestId)
+		aulogging.Logger.Ctx(ctx).Error().Printf("webhook called with invalid paylink ID. id=%s", webhook.Transaction.Invoice.PaymentRequestId)
 		return err
 	}
 
@@ -31,12 +31,12 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 	}
 
 	if paylink.ReferenceID != webhook.Transaction.Invoice.ReferenceId {
-		// webhook data claimed it was about ref_id A but the paylink is for ref_id B
+		// webhook data claimed it was about ref_id A, but the paylink is for ref_id B
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook reference_id mismatch, ref_id in webhook=%s, ref_id in paylink data=%s", webhook.Transaction.Invoice.ReferenceId, paylink.ReferenceID)
 		return WebhookRefIdMismatchErr
 	}
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("webhook call for paylink id=%d ref=%s status=%s", paylink.ID, paylink.ReferenceID, paylink.Status)
+	aulogging.Logger.Ctx(ctx).Info().Printf("webhook call for paylink id=%d ref=%s status=%s amount=%d", paylink.ID, paylink.ReferenceID, paylink.Status, paylink.Amount)
 
 	// fetch transaction data from payment service
 	transaction, err := paymentservice.Get().GetTransactionByReferenceId(ctx, paylink.ReferenceID)

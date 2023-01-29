@@ -164,7 +164,7 @@ func tstBuildValidPaymentLink() cncrdapi.PaymentLinkDto {
 		AmountPaid:  0,
 		Currency:    "EUR",
 		VatRate:     19.0,
-		Link:        "http://localhost:1111/some/paylink/221216-122218-000001",
+		Link:        "http://localhost:1111/some/paylink/101",
 	}
 }
 
@@ -175,7 +175,7 @@ func tstBuildValidPaymentLinkGetResponse() cncrdapi.PaymentLinkDto {
 		AmountDue:   390,
 		AmountPaid:  0,
 		Currency:    "EUR",
-		Link:        "http://localhost:1111/some/paylink/221216-122218-000001",
+		Link:        "http://localhost:1111/some/paylink/42",
 	}
 }
 
