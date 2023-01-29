@@ -71,15 +71,15 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 		ID:        paylink.ReferenceID,
 		DebitorID: debitor_id,
 		Type:      paymentservice.Payment,
-		Method:    paymentservice.Credit, // XXX TODO: this is a guess. We use paylink for credit cards only, atm.
+		Method:    paymentservice.Credit, // we use paylink for credit cards only, atm.
 		Amount: paymentservice.Amount{
 			GrossCent: paylink.Amount,
 			Currency:  paylink.Currency,
-			VatRate:   0,
+			VatRate:   0, // TODO should set from payload
 		},
 		Comment:       "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
 		Status:        paymentservice.Pending,
-		EffectiveDate: today, // XXX TODO: this might be in the payload
+		EffectiveDate: today, // TODO: this should be in the payload
 		DueDate:       today,
 		// omitting Deletion
 	}
@@ -94,7 +94,8 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 func updateTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
 	transaction.Amount.GrossCent = paylink.Amount
 	transaction.Amount.Currency = paylink.Currency
-	transaction.Status = paymentservice.Pending
+	transaction.Status = paymentservice.Pending           // TODO fail if already valid and values do not match (admin might have done this in the mean time)
+	transaction.EffectiveDate = transaction.EffectiveDate // TODO: this should be in the payload
 
 	err := paymentservice.Get().UpdateTransaction(ctx, transaction)
 	if err != nil {
