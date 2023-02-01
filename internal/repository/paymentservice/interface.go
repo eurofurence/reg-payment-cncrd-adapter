@@ -43,22 +43,22 @@ const (
 	Deleted   TransactionStatus = "deleted"
 )
 
-type Deletion struct {
-	PreviousStatus TransactionStatus
-	Comment        string
-	DeletedBy      string
-	Date           time.Time
+type StatusHistory struct {
+	Status     TransactionStatus `json:"status"`
+	Comment    string            `json:"comment"`
+	ChangedBy  string            `json:"changed_by"`
+	ChangeDate time.Time         `json:"change_date"`
 }
 
 type Amount struct {
-	Currency  string
-	GrossCent int64
-	VatRate   float64
+	Currency  string  `json:"currency"`
+	GrossCent int64   `json:"gross_cent"`
+	VatRate   float64 `json:"vat_rate"`
 }
 
 type Transaction struct {
+	DebitorID       uint              `json:"debitor_id"` // TODO this is an 'int64' in the payment service
 	ID              string            `json:"transaction_identifier"`
-	DebitorID       uint              `json:"debitor_id"` // XXX TODO this is an 'int64' in the payment service
 	Type            TransactionType   `json:"transaction_type"`
 	Method          PaymentMethod     `json:"method"`
 	Amount          Amount            `json:"amount"`
@@ -67,7 +67,7 @@ type Transaction struct {
 	PaymentStartUrl string            `json:"payment_start_url"`
 	EffectiveDate   string            `json:"effective_date"`
 	DueDate         string            `json:"due_date,omitempty"`
-	Deletion        *Deletion
+	StatusHistory   []StatusHistory   `json:"status_history"`
 }
 
 type TransactionResponse struct {
