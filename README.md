@@ -52,3 +52,7 @@ the contract specifications. It is sufficient to just run what's under `test/con
 You are expected to clone that repository into a directory called `reg-payment-service`
 right next to this repository. If you wish to place your contract specs somewhere else, simply change the
 path or URL in `test/contract/producer/setup_ctr_test.go`.
+
+## Open Issues and Ideas
+
+We track open issues as GitHub issues on this repository once it becomes clear what exactly needs to be done.
