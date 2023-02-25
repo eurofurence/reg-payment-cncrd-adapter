@@ -13,6 +13,8 @@ server:
   port: 9097
 logging:
   severity: INFO
+  # switch to true to log ALL communication from/to the payment provider (only signatures omitted)
+  full_requests: false
 security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token'

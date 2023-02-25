@@ -1,6 +1,7 @@
 package webhookctl
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,9 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
 	"github.com/go-chi/chi/v5"
+	"io"
 	"net/http"
+	"strings"
 )
 
 var paymentLinkService paymentlinksrv.PaymentLinkService
@@ -51,13 +54,29 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseBodyToWebhookEventDtoTolerant(ctx context.Context, w http.ResponseWriter, r *http.Request) (cncrdapi.WebhookEventDto, error) {
-	decoder := json.NewDecoder(r.Body)
 	dto := cncrdapi.WebhookEventDto{}
-	err := decoder.Decode(&dto)
+
+	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		webhookRequestParseErrorHandler(ctx, w, r, err)
+		return dto, err
 	}
-	return dto, err
+
+	if config.LogFullRequests() {
+		bodyStr := string(bodyBytes)
+		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
+		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
+		aulogging.Logger.Ctx(ctx).Info().Print("webhook request: " + bodyStr)
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(bodyBytes))
+	err = decoder.Decode(&dto)
+	if err != nil {
+		webhookRequestParseErrorHandler(ctx, w, r, err)
+		return dto, err
+	}
+
+	return dto, nil
 }
 
 func secretFromVarsOk(ctx context.Context, w http.ResponseWriter, r *http.Request) bool {
