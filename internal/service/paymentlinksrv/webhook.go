@@ -20,7 +20,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	paylinkId, err := idValidate(webhook.Transaction.Invoice.PaymentRequestId)
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Error().Printf("webhook called with invalid paylink ID. id=%s", webhook.Transaction.Invoice.PaymentRequestId)
+		aulogging.Logger.Ctx(ctx).Error().Printf("webhook called with invalid paylink ID. id=%d", webhook.Transaction.Invoice.PaymentRequestId)
 		return err
 	}
 
