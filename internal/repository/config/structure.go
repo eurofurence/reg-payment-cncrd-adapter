@@ -48,12 +48,13 @@ type (
 
 	// LoggingConfig configures logging
 	LoggingConfig struct {
-		Severity string `yaml:"severity"`
+		Severity     string `yaml:"severity"`
+		FullRequests bool   `yaml:"full_requests"`
 	}
 
 	// InvoiceConfig defines what the invoices should look like
 	InvoiceConfig struct {
-		Title       string `yaml:"title:`
+		Title       string `yaml:"title"`
 		Description string `yaml:"description"`
 		Purpose     string `yaml:"purpose"`
 	}

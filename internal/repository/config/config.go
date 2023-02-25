@@ -36,6 +36,10 @@ func LoggingSeverity() string {
 	return Configuration().Logging.Severity
 }
 
+func LogFullRequests() bool {
+	return Configuration().Logging.FullRequests
+}
+
 func FixedApiToken() string {
 	return Configuration().Security.Fixed.Api
 }

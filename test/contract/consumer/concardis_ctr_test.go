@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/pact-foundation/pact-go/dsl"
@@ -14,6 +15,8 @@ import (
 // contract test consumer side
 
 func TestConcardisApiClient(t *testing.T) {
+	auzerolog.SetupPlaintextLogging()
+
 	// Create Pact connecting to local Daemon
 	pact := &dsl.Pact{
 		Consumer: "reg_payment_cncrd_adapter",
@@ -221,6 +224,8 @@ func TestConcardisApiClient(t *testing.T) {
 	// Pass in test case (consumer side)
 	// This uses the repository on the consumer side to make the http call, should be as low level as possible
 	var test = func() (err error) {
+		ctx := auzerolog.AddLoggerToCtx(context.Background())
+
 		// override configuration with pact server url
 		config.Configuration().Service.ConcardisDownstream = fmt.Sprintf("http://localhost:%d", pact.Server.Port)
 
@@ -234,7 +239,7 @@ func TestConcardisApiClient(t *testing.T) {
 		concardis.FixedSignatureValue = "omitted"
 
 		// STEP 1: create a new payment link
-		created, err := client.CreatePaymentLink(context.Background(), createRequest)
+		created, err := client.CreatePaymentLink(ctx, createRequest)
 		if err != nil {
 			return err
 		}
@@ -243,7 +248,7 @@ func TestConcardisApiClient(t *testing.T) {
 		}
 
 		// STEP 2: read the payment link again after use
-		read, err := client.QueryPaymentLink(context.Background(), created.ID)
+		read, err := client.QueryPaymentLink(ctx, created.ID)
 		if err != nil {
 			return err
 		}
@@ -252,7 +257,7 @@ func TestConcardisApiClient(t *testing.T) {
 		}
 
 		// STEP 3: delete the payment link (wouldn't normally work after use)
-		err = client.DeletePaymentLink(context.Background(), created.ID)
+		err = client.DeletePaymentLink(ctx, created.ID)
 		if err != nil {
 			return err
 		}

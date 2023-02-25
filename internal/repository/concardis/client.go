@@ -5,7 +5,9 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"net/http"
 	"net/url"
 	"strings"
@@ -108,25 +110,64 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	return buf.String()
 }
 
-func buildCreateRequestBody(request PaymentLinkCreateRequest) string {
+func buildCreateRequestBody(ctx context.Context, request PaymentLinkCreateRequest) string {
 	// Note: the Concardis PayLink API uses PathEncoding for the Body,
 	// but QueryEncoding to calculate the signature. (don't ask)
 	// This is relevant for values with spaces, question marks, etc.
 	pathEncodedPayload := constructBufferWithEncoding(request, pathEncode)
 	queryEncodedPayloadForSigning := constructBufferWithEncoding(request, queryEncode)
 
+	if config.LogFullRequests() {
+		aulogging.Logger.Ctx(ctx).Info().Print("concardis request: " + pathEncodedPayload)
+	}
+
 	signature := signRequest(queryEncodedPayloadForSigning, config.ConcardisInstanceApiSecret())
 	return pathEncodedPayload + "&" + queryEncode(signatureKey, signature)
 }
 
+func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string, method string, requestUrl string, requestBody string, response *aurestclientapi.ParsedResponse) error {
+	rawResponseBody := &([]byte{}) // prevent nil in case request fails before parsing response
+
+	responseRaw := aurestclientapi.ParsedResponse{
+		Body: &rawResponseBody,
+	}
+	if err := i.client.Perform(ctx, method, requestUrl, requestBody, &responseRaw); err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("%s http request failed: %s", logName, err.Error())
+		return err
+	}
+	if rawResponseBody == nil || len(*rawResponseBody) == 0 {
+		err := fmt.Errorf("%s failed, did not obtain a response body", logName)
+		aulogging.Logger.Ctx(ctx).Warn().Print(err.Error())
+		return err
+	}
+
+	if config.LogFullRequests() && len(*rawResponseBody) > 0 {
+		bodyStr := string(*rawResponseBody)
+		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
+		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
+		aulogging.Logger.Ctx(ctx).Info().Print("concardis response: " + bodyStr)
+	}
+
+	if err := json.Unmarshal(*rawResponseBody, response.Body); err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("%s response parse failed: %s", logName, err.Error())
+		return err
+	}
+
+	response.Status = responseRaw.Status
+	response.Time = responseRaw.Time
+	response.Header = responseRaw.Header
+
+	return nil
+}
+
 func (i *Impl) CreatePaymentLink(ctx context.Context, request PaymentLinkCreateRequest) (PaymentLinkCreated, error) {
 	requestUrl := fmt.Sprintf("%s/v1.0/Invoice/?instance=%s", i.baseUrl, url.QueryEscape(i.instanceName))
-	requestBody := buildCreateRequestBody(request)
+	requestBody := buildCreateRequestBody(ctx, request)
 	bodyDto := createLowlevelResponseBody{}
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
 	}
-	if err := i.client.Perform(ctx, http.MethodPost, requestUrl, requestBody, &response); err != nil {
+	if err := i.performWithRawResponseLogging(ctx, "CreatePaymentLink", http.MethodPost, requestUrl, requestBody, &response); err != nil {
 		return PaymentLinkCreated{}, err
 	}
 	if response.Status >= 300 {
@@ -158,7 +199,7 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryR
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
 	}
-	if err := i.client.Perform(ctx, http.MethodGet, requestUrl, requestBody, &response); err != nil {
+	if err := i.performWithRawResponseLogging(ctx, "QueryPaymentLink", http.MethodGet, requestUrl, requestBody, &response); err != nil {
 		return PaymentLinkQueryResponse{}, err
 	}
 	if response.Status >= 300 {
@@ -173,12 +214,9 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryR
 	return bodyDto.Data[0], nil
 }
 
+// delete does not return a response body?
 type deleteLowlevelResponseBody struct {
 	Status string `json:"status"`
-}
-
-type deleteLowlevelRequestBody struct {
-	ApiSignature string `json:"ApiSignature"`
 }
 
 func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
