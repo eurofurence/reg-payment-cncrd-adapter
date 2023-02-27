@@ -3,6 +3,7 @@ package paymentlinksrv
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
@@ -43,12 +44,14 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkR
 }
 
 func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto) concardis.PaymentLinkCreateRequest {
+	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
+	shortenedOrderId = shortenedOrderId[:30]
 	return concardis.PaymentLinkCreateRequest{
 		Title:       config.InvoiceTitle(),
 		Description: config.InvoiceDescription(),
 		PSP:         1,
 		ReferenceId: data.ReferenceId,
-		OrderId:     data.ReferenceId,
+		OrderId:     shortenedOrderId,
 		Purpose:     config.InvoicePurpose(),
 		Amount:      data.AmountDue,
 		VatRate:     data.VatRate,
