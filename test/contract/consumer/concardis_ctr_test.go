@@ -36,6 +36,7 @@ func TestConcardisApiClient(t *testing.T) {
 		Description: "Please pay for your registration",
 		PSP:         1,
 		ReferenceId: "220118-150405-000004",
+		OrderId:     "220118-150405-000004",
 		Purpose:     "EF 2022 REG 000004",
 		Amount:      10550,
 		VatRate:     19.0,
@@ -43,7 +44,7 @@ func TestConcardisApiClient(t *testing.T) {
 		SKU:         "REG2022V01AT000004",
 	}
 	createRequestSampleBody := `title=Convention+Registration&description=Please+pay+for+your+registration&psp=1&` +
-		`referenceId=220118-150405-000004&purpose=EF+2022+REG+000004&amount=10550&vatRate=19.0&currency=EUR&` +
+		`referenceId=220118-150405-000004&concardisOrderId=220118-150405-000004&purpose=EF+2022+REG+000004&amount=10550&vatRate=19.0&currency=EUR&` +
 		`sku=REG2022V01AT000004&preAuthorization=0&reservation=0&ApiSignature=omitted`
 	createRequestResponse := `{
   "status": "success",
@@ -55,7 +56,7 @@ func TestConcardisApiClient(t *testing.T) {
       "referenceId": "220118-150405-000004",
       "link": "http://localhost/some/pay/link",
       "invoices": [],
-      "concardisOrderId": null,
+      "concardisOrderId": "220118-150405-000004",
       "preAuthorization": false,
       "name": "",
       "title": "Convention Registration",
@@ -184,7 +185,7 @@ func TestConcardisApiClient(t *testing.T) {
           ]
         }
       ],
-      "concardisOrderId": null,
+      "concardisOrderId": "220118-150405-000004",
       "preAuthorization": false,
       "name": "",
       "title": "Convention Registration",

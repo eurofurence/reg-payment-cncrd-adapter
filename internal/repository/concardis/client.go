@@ -100,6 +100,7 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("description", request.Description) + "&")
 	buf.WriteString(encode("psp", fmt.Sprintf("%d", request.PSP)) + "&")
 	buf.WriteString(encode("referenceId", request.ReferenceId) + "&")
+	buf.WriteString(encode("concardisOrderId", request.OrderId) + "&")
 	buf.WriteString(encode("purpose", request.Purpose) + "&")
 	buf.WriteString(encode("amount", fmt.Sprintf("%d", request.Amount)) + "&")
 	buf.WriteString(encode("vatRate", fmt.Sprintf("%.1f", request.VatRate)) + "&")

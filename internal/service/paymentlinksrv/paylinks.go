@@ -48,6 +48,7 @@ func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkReq
 		Description: config.InvoiceDescription(),
 		PSP:         1,
 		ReferenceId: data.ReferenceId,
+		OrderId:     data.ReferenceId,
 		Purpose:     config.InvoicePurpose(),
 		Amount:      data.AmountDue,
 		VatRate:     data.VatRate,
