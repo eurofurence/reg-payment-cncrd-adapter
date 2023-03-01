@@ -70,8 +70,8 @@ type TransactionData struct {
 	ID          int64   `json:"id"`
 	UUID        string  `json:"uuid"`
 	Amount      int64   `json:"amount"`
-	Status      string  `json:"status"`
-	Time        string  `json:"time"`
+	Status      string  `json:"status"` // react to declined, confirmed, authorized, what else?
+	Time        string  `json:"time"`   // take effective date from first 10 chars (ISO Date)
 	Lang        string  `json:"lang"`
 	PageUUID    string  `json:"pageUuid"`
 	Payment     Payment `json:"payment"`
