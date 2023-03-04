@@ -3,6 +3,7 @@ package acceptance
 import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
@@ -25,7 +26,49 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"QueryPaymentLink 42",
 	)
-	// TODO payment service interaction
+
+	docs.Then("and the expected requests to the payment service have been made")
+	tstRequirePaymentServiceRecording(t, []paymentservice.Transaction{
+		{
+			ID: "mock-transaction-id",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 390,
+			},
+			Status: "pending",
+		},
+	})
+}
+
+func TestWebhook_Success_Status(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an anonymous caller who knows the secret url")
+	url := "/api/rest/v1/webhook/demosecret"
+
+	docs.When("when they trigger our webhook endpoint with valid information with lots of extra fields which we ignore")
+	response := tstPerformPost(url, tstBuildValidWebhookRequest(), tstNoToken())
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusOK, response.status)
+
+	docs.Then("and the expected downstream requests have been made")
+	tstRequireConcardisRecording(t,
+		"QueryPaymentLink 42",
+	)
+
+	docs.Then("and the expected requests to the payment service have been made")
+	tstRequirePaymentServiceRecording(t, []paymentservice.Transaction{
+		{
+			ID: "mock-transaction-id",
+			Amount: paymentservice.Amount{
+				Currency:  "EUR",
+				GrossCent: 390,
+			},
+			Status: "pending",
+		},
+	})
 }
 
 func TestWebhook_InvalidJson(t *testing.T) {

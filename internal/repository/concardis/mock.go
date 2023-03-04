@@ -16,6 +16,7 @@ type Mock interface {
 	Recording() []string
 	SimulateError(err error)
 	InjectTransaction(tx TransactionData)
+	ManipulateStatus(paylinkId uint, status string)
 }
 
 type mockImpl struct {
@@ -160,4 +161,13 @@ func (m *mockImpl) InjectTransaction(tx TransactionData) {
 			m.simulatorData[id] = paylink
 		}
 	}
+}
+
+func (m *mockImpl) ManipulateStatus(paylinkId uint, status string) {
+	copiedData, ok := m.simulatorData[paylinkId]
+	if !ok {
+		return
+	}
+	copiedData.Status = status
+	m.simulatorData[paylinkId] = copiedData
 }

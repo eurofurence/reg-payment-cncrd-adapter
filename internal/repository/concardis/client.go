@@ -108,10 +108,15 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("sku", request.SKU) + "&")
 	buf.WriteString(encode("preAuthorization", "0") + "&")
 	buf.WriteString(encode("reservation", "0") + "&")
-	//  --data-urlencode "fields[forename][mandatory]=1" \
-	//  --data-urlencode "fields[forename][defaultValue]=Max" \
-	//  --data-urlencode "fields[surname][mandatory]=0" \
-	//  --data-urlencode "fields[surname][defaultValue]=Muster"
+	// fields are:
+	//  "title", "forename", "surname",
+	//  "company", "street", "postcode", "place",
+	//  "country", "phone", "email", "date_of_birth",
+	//  "terms", "privacy_policy"
+	buf.WriteString(encode("fields[terms][active]", "0") + "&")
+	buf.WriteString(encode("fields[terms][mandatory]", "0") + "&")
+	buf.WriteString(encode("fields[privacy_policy][active]", "0") + "&")
+	buf.WriteString(encode("fields[privacy_policy][mandatory]", "0") + "&")
 	buf.WriteString(encode("fields[email][mandatory]", "1") + "&")
 	buf.WriteString(encode("fields[email][defaultValue]", request.Email))
 	// "successRedirectUrl"
