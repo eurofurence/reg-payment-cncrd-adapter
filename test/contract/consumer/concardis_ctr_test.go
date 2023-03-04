@@ -47,7 +47,7 @@ func TestConcardisApiClient(t *testing.T) {
 	createRequestSampleBody := `title=Convention+Registration&description=Please+pay+for+your+registration&psp=1&` +
 		`referenceId=220118-150405-000004&concardisOrderId=220118-150405-000004&purpose=EF+2022+REG+000004&amount=10550&vatRate=19.0&currency=EUR&` +
 		`sku=REG2022V01AT000004&preAuthorization=0&reservation=0&` +
-		`fields[terms][active]=0&fields[terms][mandatory]=0&fields[privacy_policy][active]=0&fields[privacy_policy][mandatory]=0&` +
+		// `fields[terms][active]=0&fields[terms][mandatory]=0&fields[privacy_policy][active]=0&fields[privacy_policy][mandatory]=0&` +
 		`fields[email][mandatory]=1&fields[email][defaultValue]=test@example.com&ApiSignature=omitted`
 	createRequestResponse := `{
   "status": "success",
