@@ -22,6 +22,10 @@ var (
 
 // -- CreatePaymentLink --
 
+// PaymentLinkCreateRequest contains the data to construct the paylink create request body.
+//
+// Note that the json field names are not actually used because the Concardis API doesn't
+// accept JSON, and instead insists on a slightly unusual XWwwFormUrlencoded request.
 type PaymentLinkCreateRequest struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
@@ -33,6 +37,7 @@ type PaymentLinkCreateRequest struct {
 	VatRate     float64 `json:"vatRate"` // in %
 	Currency    string  `json:"currency"`
 	SKU         string  `json:"sku"`
+	Email       string  `json:"email"`
 }
 
 type PaymentLinkCreated struct {

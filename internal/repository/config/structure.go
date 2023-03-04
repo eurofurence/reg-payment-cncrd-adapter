@@ -15,6 +15,7 @@ type (
 	ServiceConfig struct {
 		Name                string `yaml:"name"`
 		PublicURL           string `yaml:"public_url"`           // my own public base url, without a trailing slash
+		AttendeeService     string `yaml:"attendee_service"`     // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
 		PaymentService      string `yaml:"payment_service"`      // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
 		ConcardisDownstream string `yaml:"concardis_downstream"` // base url, usually https://api.pay-link.eu, will use in-memory-mock if unset
 		ConcardisInstance   string `yaml:"concardis_instance"`   // your instance name, required

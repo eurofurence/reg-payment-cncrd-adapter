@@ -47,6 +47,9 @@ func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 const downstreamPattern = "^(|https?://.*[^/])$"
 
 func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
+	if violatesPattern(downstreamPattern, c.AttendeeService) {
+		errs.Add("service.attendee_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
 	if violatesPattern(downstreamPattern, c.PaymentService) {
 		errs.Add("service.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}

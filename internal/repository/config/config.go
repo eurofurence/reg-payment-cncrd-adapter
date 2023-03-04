@@ -48,6 +48,10 @@ func IsCorsDisabled() bool {
 	return Configuration().Security.Cors.DisableCors
 }
 
+func AttendeeServiceBaseUrl() string {
+	return Configuration().Service.AttendeeService
+}
+
 func PaymentServiceBaseUrl() string {
 	return Configuration().Service.PaymentService
 }

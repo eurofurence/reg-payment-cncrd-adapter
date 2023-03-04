@@ -3,6 +3,7 @@ package acceptance
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
@@ -16,6 +17,7 @@ import (
 
 var (
 	ts            *httptest.Server
+	attendeeMock  attendeeservice.Mock
 	paymentMock   paymentservice.Mock
 	concardisMock concardis.Mock
 )
@@ -31,6 +33,7 @@ func tstMockNow() time.Time {
 
 func tstSetup(configFilePath string) {
 	tstSetupConfig(configFilePath)
+	attendeeMock = attendeeservice.CreateMock()
 	paymentMock = paymentservice.CreateMock()
 	concardisMock = concardis.CreateMock()
 	paymentlinksrv.NowFunc = tstMockNow
@@ -49,6 +52,7 @@ func tstSetupHttpTestServer() {
 
 func tstShutdown() {
 	ts.Close()
+	attendeeMock.Reset()
 	paymentMock.Reset()
 	concardisMock.Reset()
 }

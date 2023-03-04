@@ -81,7 +81,7 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 		CreatedAt:   1418392958,
 	}
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s", newId, request.Amount, request.Currency)
+	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s email=%s", newId, request.Amount, request.Currency, request.Email)
 
 	m.simulatorData[newId] = data
 	return response, nil

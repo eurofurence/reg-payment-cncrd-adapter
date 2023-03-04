@@ -2,6 +2,7 @@ package paymentlinksrv
 
 import (
 	"context"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"net/url"
 	"strings"
 
@@ -34,7 +35,12 @@ func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.Pay
 }
 
 func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, uint, error) {
-	concardisRequest := i.concardisCreateRequestFromApiRequest(data)
+	attendee, err := attendeeservice.Get().GetAttendee(ctx, uint(data.DebitorId))
+	if err != nil {
+		return cncrdapi.PaymentLinkDto{}, 0, err
+	}
+
+	concardisRequest := i.concardisCreateRequestFromApiRequest(data, attendee)
 	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
 	if err != nil {
 		return cncrdapi.PaymentLinkDto{}, 0, err
@@ -43,7 +49,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkR
 	return output, concardisResponse.ID, nil
 }
 
-func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto) concardis.PaymentLinkCreateRequest {
+func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) concardis.PaymentLinkCreateRequest {
 	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
 	if len(shortenedOrderId) > 30 {
 		shortenedOrderId = shortenedOrderId[:30]
@@ -59,6 +65,7 @@ func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkReq
 		VatRate:     data.VatRate,
 		Currency:    data.Currency,
 		SKU:         "registration",
+		Email:       attendee.Email,
 	}
 }
 

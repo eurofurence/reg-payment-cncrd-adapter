@@ -3,6 +3,7 @@ package acceptance
 import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -28,7 +29,7 @@ func TestCreatePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected request for a payment link has been made")
 	tstRequireConcardisRecording(t,
-		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration}",
+		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de}",
 	)
 }
 
@@ -130,7 +131,23 @@ func TestCreatePaylink_WrongToken(t *testing.T) {
 	require.Empty(t, concardisMock.Recording())
 }
 
-func TestCreatePaylink_DownstreamError(t *testing.T) {
+func TestCreatePaylink_DownstreamErrorAttSrv(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a caller who supplies a correct api token")
+	token := tstValidApiToken()
+
+	docs.When("when they attempt to create a payment link with valid information while the attendee service is down")
+	attendeeMock.SimulateGetError(attendeeservice.DownstreamError)
+	requestBody := tstBuildValidPaymentLinkRequest()
+	response := tstPerformPost("/api/rest/v1/paylinks", tstRenderJson(requestBody), token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadGateway, "attsrv.downstream.error", nil)
+}
+
+func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 

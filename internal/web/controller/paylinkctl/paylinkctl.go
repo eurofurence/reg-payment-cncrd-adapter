@@ -7,6 +7,7 @@ import (
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctlutil"
@@ -49,7 +50,9 @@ func createPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	dto, id, err := paymentLinkService.CreatePaymentLink(ctx, request)
 	if err != nil {
 		if errors.Is(err, concardis.DownstreamError) {
-			downstreamErrorHandler(ctx, w, r, err)
+			downstreamErrorHandler(ctx, w, r, "paylink", err)
+		} else if errors.Is(err, attendeeservice.DownstreamError) {
+			downstreamErrorHandler(ctx, w, r, "attsrv", err)
 		} else {
 			ctlutil.UnexpectedError(ctx, w, r, err)
 		}
@@ -76,7 +79,7 @@ func getPaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	dto, err := paymentLinkService.GetPaymentLink(ctx, id)
 	if err != nil {
 		if errors.Is(err, concardis.DownstreamError) {
-			downstreamErrorHandler(ctx, w, r, err)
+			downstreamErrorHandler(ctx, w, r, "paylink", err)
 		} else if errors.Is(err, concardis.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r, id)
 		} else {
@@ -103,7 +106,7 @@ func deletePaylinkHandler(w http.ResponseWriter, r *http.Request) {
 	err = paymentLinkService.DeletePaymentLink(ctx, id)
 	if err != nil {
 		if errors.Is(err, concardis.DownstreamError) {
-			downstreamErrorHandler(ctx, w, r, err)
+			downstreamErrorHandler(ctx, w, r, "paylink", err)
 		} else if errors.Is(err, concardis.NoSuchID404Error) {
 			paylinkNotFoundErrorHandler(ctx, w, r, id)
 		} else {
@@ -145,9 +148,9 @@ func paylinkRequestInvalidErrorHandler(ctx context.Context, w http.ResponseWrite
 	ctlutil.ErrorHandler(ctx, w, r, "paylink.data.invalid", http.StatusBadRequest, validationErrors)
 }
 
-func downstreamErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("downstream error: %s", err.Error())
-	ctlutil.ErrorHandler(ctx, w, r, "paylink.downstream.error", http.StatusBadGateway, nil)
+func downstreamErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, sysname string, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("%s downstream error: %s", sysname, err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, fmt.Sprintf("%s.downstream.error", sysname), http.StatusBadGateway, nil)
 }
 
 func invalidPaylinkIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
