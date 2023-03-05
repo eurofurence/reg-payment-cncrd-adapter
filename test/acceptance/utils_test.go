@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 	"io/ioutil"
 	"log"
@@ -137,6 +138,14 @@ func tstRequirePaymentLinkResponse(t *testing.T, response tstWebResponse, expect
 
 func tstRequireConcardisRecording(t *testing.T, expectedEntries ...string) {
 	actual := concardisMock.Recording()
+	require.Equal(t, len(expectedEntries), len(actual))
+	for i := range expectedEntries {
+		require.Equal(t, expectedEntries[i], actual[i])
+	}
+}
+
+func tstRequireMailServiceRecording(t *testing.T, expectedEntries []mailservice.MailSendDto) {
+	actual := mailMock.Recording()
 	require.Equal(t, len(expectedEntries), len(actual))
 	for i := range expectedEntries {
 		require.Equal(t, expectedEntries[i], actual[i])

@@ -75,9 +75,10 @@ type PaymentLinkInvoice struct {
 //
 // Successful payment processed (status: confirmed) => book
 //
-// Order placed (status: waiting) => log info and ignore
 // Payment aborted by customer (status: cancelled) => log info and ignore
 // Payment declined (status: declined) => log info and ignore
+//
+// Order placed (status: waiting) => log warn and notify
 //
 // Pre-authorization successful (status: authorized) => log error and notify
 // Payment (partial-) refunded by merchant (status: refunded / partially-refunded) => log error and notify

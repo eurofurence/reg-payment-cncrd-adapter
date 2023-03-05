@@ -6,6 +6,7 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/service/paymentlinksrv"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/app"
@@ -18,6 +19,7 @@ import (
 var (
 	ts            *httptest.Server
 	attendeeMock  attendeeservice.Mock
+	mailMock      mailservice.Mock
 	paymentMock   paymentservice.Mock
 	concardisMock concardis.Mock
 )
@@ -34,6 +36,7 @@ func tstMockNow() time.Time {
 func tstSetup(configFilePath string) {
 	tstSetupConfig(configFilePath)
 	attendeeMock = attendeeservice.CreateMock()
+	mailMock = mailservice.CreateMock()
 	paymentMock = paymentservice.CreateMock()
 	concardisMock = concardis.CreateMock()
 	paymentlinksrv.NowFunc = tstMockNow
@@ -53,6 +56,7 @@ func tstSetupHttpTestServer() {
 func tstShutdown() {
 	ts.Close()
 	attendeeMock.Reset()
+	mailMock.Reset()
 	paymentMock.Reset()
 	concardisMock.Reset()
 }

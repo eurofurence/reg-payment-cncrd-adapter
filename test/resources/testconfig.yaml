@@ -9,6 +9,7 @@ security:
 logging:
   severity: INFO
   full_requests: true
+  error_notify_mail: errors@example.com
 invoice:
   title: 'some page title'
   description: 'some page description'
