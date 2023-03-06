@@ -5,6 +5,7 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -154,13 +155,18 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to create a payment link with valid information while the downstream api is down")
+	docs.When("when they attempt to create a payment link with valid information while the paylink api is down")
 	concardisMock.SimulateError(concardis.DownstreamError)
 	requestBody := tstBuildValidPaymentLinkRequest()
 	response := tstPerformPost("/api/rest/v1/paylinks", tstRenderJson(requestBody), token)
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
+
+	docs.Then("and the expected email notifications have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
+		tstExpectedMailNotification("create-pay-link", "downstream unavailable - see log for details"),
+	})
 }
 
 // --- get ---
@@ -261,12 +267,17 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to get a payment link while the downstream api is down")
+	docs.When("when they attempt to get a payment link while the paylink api is down")
 	concardisMock.SimulateError(concardis.DownstreamError)
 	response := tstPerformGet("/api/rest/v1/paylinks/42", token)
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
+
+	docs.Then("and the expected email notifications have been sent")
+	expNotif := tstExpectedMailNotification("get-pay-link", "downstream unavailable - see log for details")
+	expNotif.Variables["referenceId"] = "paylink id 42"
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
 }
 
 // --- delete ---
@@ -368,10 +379,15 @@ func TestDeletePaylink_DownstreamError(t *testing.T) {
 	docs.Given("given a caller who supplies a correct api token")
 	token := tstValidApiToken()
 
-	docs.When("when they attempt to delete a payment link while the downstream api is down")
+	docs.When("when they attempt to delete a payment link while the paylink api is down")
 	concardisMock.SimulateError(concardis.DownstreamError)
 	response := tstPerformDelete("/api/rest/v1/paylinks/42", token)
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "paylink.downstream.error", nil)
+
+	docs.Then("and the expected email notifications have been sent")
+	expNotif := tstExpectedMailNotification("delete-pay-link", "downstream unavailable - see log for details")
+	expNotif.Variables["referenceId"] = "paylink id 42"
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
 }

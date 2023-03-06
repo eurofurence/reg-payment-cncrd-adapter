@@ -2,6 +2,7 @@ package paymentlinksrv
 
 import (
 	"context"
+	"fmt"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"net/url"
 	"strings"
@@ -43,6 +44,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkR
 	concardisRequest := i.concardisCreateRequestFromApiRequest(data, attendee)
 	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "create-pay-link", data.ReferenceId, err.Error())
 		return cncrdapi.PaymentLinkDto{}, 0, err
 	}
 	output := i.apiResponseFromConcardisResponse(concardisResponse, concardisRequest)
@@ -86,6 +88,7 @@ func (i *Impl) apiResponseFromConcardisResponse(response concardis.PaymentLinkCr
 func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error) {
 	data, err := concardis.Get().QueryPaymentLink(ctx, id)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
 		return cncrdapi.PaymentLinkDto{}, err
 	}
 
@@ -106,6 +109,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
 	err := concardis.Get().DeletePaymentLink(ctx, id)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
 		return err
 	}
 

@@ -219,3 +219,18 @@ func tstBuildValidWebhookRequest() string {
 }
 `
 }
+
+func tstExpectedMailNotification(operation string, status string) mailservice.MailSendDto {
+	return mailservice.MailSendDto{
+		CommonID: "payment-cncrd-adapter-error",
+		Lang:     "en-US",
+		To: []string{
+			"errors@example.com",
+		},
+		Variables: map[string]string{
+			"status":      status,
+			"operation":   operation,
+			"referenceId": "221216-122218-000001",
+		},
+	}
+}

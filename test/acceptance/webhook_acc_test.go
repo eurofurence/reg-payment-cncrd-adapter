@@ -52,18 +52,7 @@ func TestWebhook_Success_Status_NotifyMail(t *testing.T) {
 		testname := fmt.Sprintf("Status_%s", status)
 		t.Run(testname, func(t *testing.T) {
 			tstWebhookSuccessCase(t, status, []paymentservice.Transaction{}, []mailservice.MailSendDto{
-				{
-					CommonID: "payment-cncrd-adapter-error",
-					Lang:     "en-US",
-					To: []string{
-						"errors@example.com",
-					},
-					Variables: map[string]string{
-						"status":      status,
-						"operation":   "webhook",
-						"referenceId": "221216-122218-000001",
-					},
-				},
+				tstExpectedMailNotification("webhook", status),
 			})
 		})
 	}
