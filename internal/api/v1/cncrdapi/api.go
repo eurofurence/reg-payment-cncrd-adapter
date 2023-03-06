@@ -71,6 +71,7 @@ type WebhookEventTransaction struct {
 
 // WebhookEventTransactionInvoice struct for WebhookEventTransactionInvoice
 type WebhookEventTransactionInvoice struct {
+	Number           string `json:"number"` // "123456" -> test webhook payload
 	ReferenceId      string `json:"referenceId"`
 	PaymentRequestId int64  `json:"paymentRequestId"` // id of the payment link concerned
 }

@@ -2,7 +2,10 @@ package paymentlinksrv
 
 import (
 	"context"
+	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"net/url"
+	"strings"
 
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
@@ -33,26 +36,38 @@ func (i *Impl) ValidatePaymentLinkRequest(ctx context.Context, data cncrdapi.Pay
 }
 
 func (i *Impl) CreatePaymentLink(ctx context.Context, data cncrdapi.PaymentLinkRequestDto) (cncrdapi.PaymentLinkDto, uint, error) {
-	concardisRequest := i.concardisCreateRequestFromApiRequest(data)
+	attendee, err := attendeeservice.Get().GetAttendee(ctx, uint(data.DebitorId))
+	if err != nil {
+		return cncrdapi.PaymentLinkDto{}, 0, err
+	}
+
+	concardisRequest := i.concardisCreateRequestFromApiRequest(data, attendee)
 	concardisResponse, err := concardis.Get().CreatePaymentLink(ctx, concardisRequest)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "create-pay-link", data.ReferenceId, err.Error())
 		return cncrdapi.PaymentLinkDto{}, 0, err
 	}
 	output := i.apiResponseFromConcardisResponse(concardisResponse, concardisRequest)
 	return output, concardisResponse.ID, nil
 }
 
-func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto) concardis.PaymentLinkCreateRequest {
+func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkRequestDto, attendee attendeeservice.AttendeeDto) concardis.PaymentLinkCreateRequest {
+	shortenedOrderId := strings.ReplaceAll(data.ReferenceId, "-", "")
+	if len(shortenedOrderId) > 30 {
+		shortenedOrderId = shortenedOrderId[:30]
+	}
 	return concardis.PaymentLinkCreateRequest{
 		Title:       config.InvoiceTitle(),
 		Description: config.InvoiceDescription(),
 		PSP:         1,
 		ReferenceId: data.ReferenceId,
+		OrderId:     shortenedOrderId,
 		Purpose:     config.InvoicePurpose(),
 		Amount:      data.AmountDue,
 		VatRate:     data.VatRate,
 		Currency:    data.Currency,
 		SKU:         "registration",
+		Email:       attendee.Email,
 	}
 }
 
@@ -73,6 +88,7 @@ func (i *Impl) apiResponseFromConcardisResponse(response concardis.PaymentLinkCr
 func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLinkDto, error) {
 	data, err := concardis.Get().QueryPaymentLink(ctx, id)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "get-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
 		return cncrdapi.PaymentLinkDto{}, err
 	}
 
@@ -93,6 +109,7 @@ func (i *Impl) GetPaymentLink(ctx context.Context, id uint) (cncrdapi.PaymentLin
 func (i *Impl) DeletePaymentLink(ctx context.Context, id uint) error {
 	err := concardis.Get().DeletePaymentLink(ctx, id)
 	if err != nil {
+		_ = i.SendErrorNotifyMail(ctx, "delete-pay-link", fmt.Sprintf("paylink id %d", id), err.Error())
 		return err
 	}
 

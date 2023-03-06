@@ -28,6 +28,9 @@ type PaymentLinkService interface {
 
 	// HandleWebhook requests the payment link referenced in the webhook data and reacts to any new payments
 	HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventDto) error
+
+	// SendErrorNotifyMail notifies us about unexpected conditions in this service so we can look at the logs
+	SendErrorNotifyMail(ctx context.Context, operation string, referenceId string, status string) error
 }
 
 var (

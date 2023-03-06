@@ -40,12 +40,24 @@ func LogFullRequests() bool {
 	return Configuration().Logging.FullRequests
 }
 
+func ErrorNotifyMail() string {
+	return Configuration().Logging.ErrorNotifyMail
+}
+
 func FixedApiToken() string {
 	return Configuration().Security.Fixed.Api
 }
 
 func IsCorsDisabled() bool {
 	return Configuration().Security.Cors.DisableCors
+}
+
+func AttendeeServiceBaseUrl() string {
+	return Configuration().Service.AttendeeService
+}
+
+func MailServiceBaseUrl() string {
+	return Configuration().Service.MailService
 }
 
 func PaymentServiceBaseUrl() string {

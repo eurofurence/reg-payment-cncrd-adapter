@@ -2,6 +2,8 @@ package acceptance
 
 import (
 	"encoding/json"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -142,6 +144,22 @@ func tstRequireConcardisRecording(t *testing.T, expectedEntries ...string) {
 	}
 }
 
+func tstRequireMailServiceRecording(t *testing.T, expectedEntries []mailservice.MailSendDto) {
+	actual := mailMock.Recording()
+	require.Equal(t, len(expectedEntries), len(actual))
+	for i := range expectedEntries {
+		require.Equal(t, expectedEntries[i], actual[i])
+	}
+}
+
+func tstRequirePaymentServiceRecording(t *testing.T, expectedEntries []paymentservice.Transaction) {
+	actual := paymentMock.Recording()
+	require.Equal(t, len(expectedEntries), len(actual))
+	for i := range expectedEntries {
+		require.Equal(t, expectedEntries[i], actual[i])
+	}
+}
+
 // --- data ---
 
 func tstBuildValidPaymentLinkRequest() cncrdapi.PaymentLinkRequestDto {
@@ -200,4 +218,19 @@ func tstBuildValidWebhookRequest() string {
    }
 }
 `
+}
+
+func tstExpectedMailNotification(operation string, status string) mailservice.MailSendDto {
+	return mailservice.MailSendDto{
+		CommonID: "payment-cncrd-adapter-error",
+		Lang:     "en-US",
+		To: []string{
+			"errors@example.com",
+		},
+		Variables: map[string]string{
+			"status":      status,
+			"operation":   operation,
+			"referenceId": "221216-122218-000001",
+		},
+	}
 }

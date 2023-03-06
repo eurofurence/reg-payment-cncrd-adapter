@@ -16,6 +16,7 @@ type Mock interface {
 	Recording() []string
 	SimulateError(err error)
 	InjectTransaction(tx TransactionData)
+	ManipulateStatus(paylinkId uint, status string)
 }
 
 type mockImpl struct {
@@ -81,7 +82,7 @@ func (m *mockImpl) CreatePaymentLink(ctx context.Context, request PaymentLinkCre
 		CreatedAt:   1418392958,
 	}
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s", newId, request.Amount, request.Currency)
+	aulogging.Logger.Ctx(ctx).Info().Printf("mock creating payment link id=%d amount=%d curr=%s email=%s", newId, request.Amount, request.Currency, request.Email)
 
 	m.simulatorData[newId] = data
 	return response, nil
@@ -160,4 +161,13 @@ func (m *mockImpl) InjectTransaction(tx TransactionData) {
 			m.simulatorData[id] = paylink
 		}
 	}
+}
+
+func (m *mockImpl) ManipulateStatus(paylinkId uint, status string) {
+	copiedData, ok := m.simulatorData[paylinkId]
+	if !ok {
+		return
+	}
+	copiedData.Status = status
+	m.simulatorData[paylinkId] = copiedData
 }

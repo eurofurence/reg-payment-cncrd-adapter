@@ -100,13 +100,23 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("description", request.Description) + "&")
 	buf.WriteString(encode("psp", fmt.Sprintf("%d", request.PSP)) + "&")
 	buf.WriteString(encode("referenceId", request.ReferenceId) + "&")
+	buf.WriteString(encode("concardisOrderId", request.OrderId) + "&")
 	buf.WriteString(encode("purpose", request.Purpose) + "&")
 	buf.WriteString(encode("amount", fmt.Sprintf("%d", request.Amount)) + "&")
 	buf.WriteString(encode("vatRate", fmt.Sprintf("%.1f", request.VatRate)) + "&")
 	buf.WriteString(encode("currency", request.Currency) + "&")
 	buf.WriteString(encode("sku", request.SKU) + "&")
 	buf.WriteString(encode("preAuthorization", "0") + "&")
-	buf.WriteString(encode("reservation", "0"))
+	buf.WriteString(encode("reservation", "0") + "&")
+	// fields are:
+	//  "title", "forename", "surname",
+	//  "company", "street", "postcode", "place",
+	//  "country", "phone", "email", "date_of_birth",
+	//  "terms", "privacy_policy"
+	buf.WriteString(encode("fields[email][mandatory]", "1") + "&")
+	buf.WriteString(encode("fields[email][defaultValue]", request.Email))
+	// "successRedirectUrl"
+	// "failedRedirectUrl"
 	return buf.String()
 }
 

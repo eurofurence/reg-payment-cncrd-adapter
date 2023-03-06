@@ -55,7 +55,7 @@ func (m *MockImpl) UpdateTransaction(ctx context.Context, transaction Transactio
 	return nil
 }
 
-func (m *MockImpl) GetTransactionByReferenceId(ctx context.Context, refrence_id string) (Transaction, error) {
+func (m *MockImpl) GetTransactionByReferenceId(ctx context.Context, referenceId string) (Transaction, error) {
 	transaction := Transaction{
 		ID: "mock-transaction-id",
 	}

@@ -3,6 +3,7 @@ package paymentlinksrv
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -20,23 +21,46 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	paylinkId, err := idValidate(webhook.Transaction.Invoice.PaymentRequestId)
 	if err != nil {
+		if webhook.Transaction.Invoice.Number == "123456" && webhook.Transaction.Invoice.PaymentRequestId == 0 {
+			// could be a test webhook invocation
+			aulogging.Logger.Ctx(ctx).Warn().Printf("webhook called with invalid paylink ID 0 invoice number 123456 (probably someone clicked test button in UI)")
+			_ = i.SendErrorNotifyMail(ctx, "webhook", "paylinkId 0 test button", "api-error")
+
+			return nil
+		}
+
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook called with invalid paylink ID. id=%d", webhook.Transaction.Invoice.PaymentRequestId)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", webhook.Transaction.Invoice.PaymentRequestId), "api-error")
+
 		return err
 	}
 
 	paylink, err := concardis.Get().QueryPaymentLink(ctx, paylinkId)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from concardis. err=%s", err.Error())
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "api-error")
 		return err
 	}
 
 	if paylink.ReferenceID != webhook.Transaction.Invoice.ReferenceId {
 		// webhook data claimed it was about ref_id A, but the paylink is for ref_id B
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook reference_id mismatch, ref_id in webhook=%s, ref_id in paylink data=%s", webhook.Transaction.Invoice.ReferenceId, paylink.ReferenceID)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "ref-id-mismatch")
 		return WebhookRefIdMismatchErr
 	}
 
 	aulogging.Logger.Ctx(ctx).Info().Printf("webhook call for paylink id=%d ref=%s status=%s amount=%d", paylink.ID, paylink.ReferenceID, paylink.Status, paylink.Amount)
+
+	if paylink.Status == "cancelled" || paylink.Status == "declined" {
+		aulogging.Logger.Ctx(ctx).Info().Printf("irrelevant status, ignoring as successful")
+		return nil
+	}
+
+	if paylink.Status != "confirmed" {
+		_ = i.SendErrorNotifyMail(ctx, "webhook", paylink.ReferenceID, paylink.Status)
+		// send 200 so concardis doesn't keep trying the webhook - we've done all we can
+		return nil
+	}
 
 	// fetch transaction data from payment service
 	transaction, err := paymentservice.Get().GetTransactionByReferenceId(ctx, paylink.ReferenceID)

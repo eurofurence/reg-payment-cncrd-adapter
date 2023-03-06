@@ -545,6 +545,7 @@ components:
             - paylink.id.notfound (no such paylink number in the Concardis service)
             - paylink.id.invalid (syntactically invalid paylink id, must be positive integer)
             - paylink.downstream.error (downstream api failure)
+            - attsrv.downstream.error (failed to call attendee service, and it isn't not found)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
             - webhook.parse.error (json body parse error)
