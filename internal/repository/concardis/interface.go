@@ -59,6 +59,7 @@ type PaymentLinkQueryResponse struct {
 	Amount      int64                `json:"amount"`
 	Currency    string               `json:"currency"`
 	CreatedAt   int64                `json:"createdAt"`
+	VatRate     float64              `json:"vatRate"`
 }
 
 type PaymentLinkInvoice struct {
