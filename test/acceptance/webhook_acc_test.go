@@ -33,7 +33,8 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 				Currency:  "EUR",
 				GrossCent: 390,
 			},
-			Status: "pending",
+			Status:        "pending",
+			EffectiveDate: "2023-01-08",
 		},
 	}, []mailservice.MailSendDto{})
 }

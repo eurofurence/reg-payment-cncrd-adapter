@@ -40,6 +40,15 @@ func newMock() Mock {
 		Amount:      390,
 		Currency:    "EUR",
 		CreatedAt:   1418392958,
+		Invoices: []PaymentLinkInvoice{
+			{
+				Transactions: []TransactionData{
+					{
+						Time: "2023-01-08 12:22:58",
+					},
+				},
+			},
+		},
 	}
 	return &mockImpl{
 		recording:     make([]string, 0),

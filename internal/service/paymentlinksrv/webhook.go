@@ -70,7 +70,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 			// Note: this should never happen, but we try to recover because someone paid us money for somthing.
 			aulogging.Logger.Ctx(ctx).Error().Printf("webhook reference_id not found in payment service. Creating new transaction. reference_id=%s", paylink.ReferenceID)
 
-			return createTransaction(ctx, paylink)
+			return i.createTransaction(ctx, paylink)
 		} else {
 			aulogging.Logger.Ctx(ctx).Error().Printf("error fetching transaction from payment service. err=%s", err.Error())
 			return err
@@ -79,17 +79,23 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 
 	// matching transaction was found in the payment service database.
 	// update the values with data from Concardis.
-	return updateTransaction(ctx, paylink, transaction)
+	return i.updateTransaction(ctx, paylink, transaction)
 }
 
-func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse) error {
+func (i *Impl) createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse) error {
 	debitor_id, err := debitorIdFromReferenceID(paylink.ReferenceID)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("webhook couldn't parse debitor_id from reference_id. reference_id=%s", paylink.ReferenceID)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "parse-refid-err")
 		// we log a warning, but we continue anyway
 	}
 
 	today := time.Now().Format(isoDateFormat)
+	effective := today
+
+	if len(paylink.Invoices) > 0 && len(paylink.Invoices[0].Transactions) > 0 && len(paylink.Invoices[0].Transactions[0].Time) >= 10 {
+		effective = paylink.Invoices[0].Transactions[0].Time[0:10]
+	}
 
 	transaction := paymentservice.Transaction{
 		ID:        paylink.ReferenceID,
@@ -99,31 +105,46 @@ func createTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryRe
 		Amount: paymentservice.Amount{
 			GrossCent: paylink.Amount,
 			Currency:  paylink.Currency,
-			VatRate:   0, // TODO should set from payload
+			VatRate:   paylink.VatRate,
 		},
 		Comment:       "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
 		Status:        paymentservice.Pending,
-		EffectiveDate: today, // TODO: this should be in the payload
-		DueDate:       today,
+		EffectiveDate: effective,
+		DueDate:       effective,
 		// omitting Deletion
 	}
 
 	err = paymentservice.Get().AddTransaction(ctx, transaction)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook could not create transaction in payment service! (we don't know why we received this money, and we couldn't add the transaction to the database either!) reference_id=%s", paylink.ReferenceID)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "create-missing-err")
 	}
 	return err
 }
 
-func updateTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
+func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentLinkQueryResponse, transaction paymentservice.Transaction) error {
+	if transaction.Status == paymentservice.Valid {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("aborting transaction update - already in status valid! reference_id=%s", paylink.ReferenceID)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "abort-update-for-valid")
+		return nil // not an error
+	}
+
+	today := time.Now().Format(isoDateFormat)
+	effective := today
+
+	if len(paylink.Invoices) > 0 && len(paylink.Invoices[0].Transactions) > 0 && len(paylink.Invoices[0].Transactions[0].Time) >= 10 {
+		effective = paylink.Invoices[0].Transactions[0].Time[0:10]
+	}
+
 	transaction.Amount.GrossCent = paylink.Amount
 	transaction.Amount.Currency = paylink.Currency
-	transaction.Status = paymentservice.Pending           // TODO fail if already valid and values do not match (admin might have done this in the mean time)
-	transaction.EffectiveDate = transaction.EffectiveDate // TODO: this should be in the payload
+	transaction.Status = paymentservice.Pending
+	transaction.EffectiveDate = effective
 
 	err := paymentservice.Get().UpdateTransaction(ctx, transaction)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook unable to update upstream transaction. reference_id=%s", paylink.ReferenceID)
+		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("refId: %s", paylink.ReferenceID), "update-tx-err")
 		return err
 	}
 
