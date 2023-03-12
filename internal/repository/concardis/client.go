@@ -116,10 +116,10 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("fields[email][mandatory]", "1") + "&")
 	buf.WriteString(encode("fields[email][defaultValue]", request.Email))
 	if request.SuccessRedirectUrl != "" {
-		buf.WriteString(encode("successRedirectUrl", request.SuccessRedirectUrl))
+		buf.WriteString("&" + encode("successRedirectUrl", request.SuccessRedirectUrl))
 	}
 	if request.FailedRedirectUrl != "" {
-		buf.WriteString(encode("failedRedirectUrl", request.FailedRedirectUrl))
+		buf.WriteString("&" + encode("failedRedirectUrl", request.FailedRedirectUrl))
 	}
 	return buf.String()
 }
