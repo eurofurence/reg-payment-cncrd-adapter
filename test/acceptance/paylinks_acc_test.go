@@ -30,7 +30,7 @@ func TestCreatePaylink_Success(t *testing.T) {
 
 	docs.Then("and the expected request for a payment link has been made")
 	tstRequireConcardisRecording(t,
-		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de}",
+		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
 	)
 }
 

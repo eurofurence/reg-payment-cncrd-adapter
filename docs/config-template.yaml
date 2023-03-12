@@ -13,6 +13,9 @@ service:
   # concardis_downstream: 'https://api.pay-link.eu'
   concardis_instance: 'demo'
   concardis_api_secret: 'demosecret'
+  # if set, will add these redirects to the request for the paylink
+  success_redirect: 'http://localhost:10000/app/register'
+  failure_redirect: 'http://localhost:10000/app/register'
 server:
   port: 9097
 logging:
