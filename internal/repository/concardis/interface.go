@@ -38,6 +38,9 @@ type PaymentLinkCreateRequest struct {
 	Currency    string  `json:"currency"`
 	SKU         string  `json:"sku"`
 	Email       string  `json:"email"`
+
+	SuccessRedirectUrl string `json:"successRedirectUrl"` // optional - leave empty
+	FailedRedirectUrl  string `json:"failedRedirectUrl"`  // optional - leave empty
 }
 
 type PaymentLinkCreated struct {

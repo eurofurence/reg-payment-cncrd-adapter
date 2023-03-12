@@ -68,6 +68,9 @@ func (i *Impl) concardisCreateRequestFromApiRequest(data cncrdapi.PaymentLinkReq
 		Currency:    data.Currency,
 		SKU:         "registration",
 		Email:       attendee.Email,
+
+		SuccessRedirectUrl: config.SuccessRedirect(),
+		FailedRedirectUrl:  config.FailureRedirect(),
 	}
 }
 

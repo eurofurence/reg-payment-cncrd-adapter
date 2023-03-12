@@ -21,6 +21,8 @@ type (
 		ConcardisDownstream string `yaml:"concardis_downstream"` // base url, usually https://api.pay-link.eu, will use in-memory-mock if unset
 		ConcardisInstance   string `yaml:"concardis_instance"`   // your instance name, required
 		ConcardisApiSecret  string `yaml:"concardis_api_secret"` // your instance's api secret, required
+		SuccessRedirect     string `yaml:"success_redirect"`
+		FailureRedirect     string `yaml:"failure_redirect"`
 	}
 
 	// ServerConfig contains all values for http configuration

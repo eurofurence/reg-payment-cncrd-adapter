@@ -91,3 +91,11 @@ func InvoiceDescription() string {
 func InvoicePurpose() string {
 	return Configuration().Invoice.Purpose
 }
+
+func SuccessRedirect() string {
+	return Configuration().Service.SuccessRedirect
+}
+
+func FailureRedirect() string {
+	return Configuration().Service.FailureRedirect
+}
