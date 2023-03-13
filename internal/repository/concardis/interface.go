@@ -31,7 +31,7 @@ type PaymentLinkCreateRequest struct {
 	Description string  `json:"description"`
 	PSP         uint64  `json:"psp"`
 	ReferenceId string  `json:"referenceId"`
-	OrderId     string  `json:"concardisOrderId"`
+	OrderId     string  `json:"merchantOrderId"`
 	Purpose     string  `json:"purpose"`
 	Amount      int64   `json:"amount"`  // in cents
 	VatRate     float64 `json:"vatRate"` // in %
