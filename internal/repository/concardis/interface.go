@@ -31,7 +31,7 @@ type PaymentLinkCreateRequest struct {
 	Description string  `json:"description"`
 	PSP         uint64  `json:"psp"`
 	ReferenceId string  `json:"referenceId"`
-	OrderId     string  `json:"merchantOrderId"`
+	OrderId     string  `json:"concardisOrderId"`
 	Purpose     string  `json:"purpose"`
 	Amount      int64   `json:"amount"`  // in cents
 	VatRate     float64 `json:"vatRate"` // in %
@@ -94,7 +94,7 @@ type PaymentLinkInvoice struct {
 
 type TransactionData struct {
 	ID          int64   `json:"id"`
-	UUID        string  `json:"uuid"`
+	UUID        string  `json:"uuid"` // sent as merchantOrderId
 	Amount      int64   `json:"amount"`
 	Status      string  `json:"status"` // react to declined, confirmed, authorized, what else?
 	Time        string  `json:"time"`   // take effective date from first 10 chars (ISO Date)
