@@ -45,6 +45,7 @@ func newMock() Mock {
 				Transactions: []TransactionData{
 					{
 						Time: "2023-01-08 12:22:58",
+						UUID: "d3adb33f",
 					},
 				},
 			},

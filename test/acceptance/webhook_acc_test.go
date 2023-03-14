@@ -35,6 +35,7 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 			},
 			Status:        "pending",
 			EffectiveDate: "2023-01-08",
+			Comment:       "CC orderId d3adb33f",
 		},
 	}, []mailservice.MailSendDto{})
 }

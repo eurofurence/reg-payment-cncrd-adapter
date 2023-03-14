@@ -100,7 +100,8 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	buf.WriteString(encode("description", request.Description) + "&")
 	buf.WriteString(encode("psp", fmt.Sprintf("%d", request.PSP)) + "&")
 	buf.WriteString(encode("referenceId", request.ReferenceId) + "&")
-	buf.WriteString(encode("concardisOrderId", request.OrderId) + "&")
+	// leaving this one out because it leads to duplicate problems when re-trying a payment after a failure (which we can't really prevent)
+	// buf.WriteString(encode("concardisOrderId", request.OrderId) + "&")
 	buf.WriteString(encode("purpose", request.Purpose) + "&")
 	buf.WriteString(encode("amount", fmt.Sprintf("%d", request.Amount)) + "&")
 	buf.WriteString(encode("vatRate", fmt.Sprintf("%.1f", request.VatRate)) + "&")
@@ -113,6 +114,7 @@ func constructBufferWithEncoding(request PaymentLinkCreateRequest, encode func(k
 	//  "company", "street", "postcode", "place",
 	//  "country", "phone", "email", "date_of_birth",
 	//  "terms", "privacy_policy"
+	// terms is selected by default if not specified
 	buf.WriteString(encode("fields[email][mandatory]", "1") + "&")
 	buf.WriteString(encode("fields[email][defaultValue]", request.Email))
 	if request.SuccessRedirectUrl != "" {

@@ -90,12 +90,8 @@ func (i *Impl) createTransaction(ctx context.Context, paylink concardis.PaymentL
 		// we log a warning, but we continue anyway
 	}
 
-	today := time.Now().Format(isoDateFormat)
-	effective := today
-
-	if len(paylink.Invoices) > 0 && len(paylink.Invoices[0].Transactions) > 0 && len(paylink.Invoices[0].Transactions[0].Time) >= 10 {
-		effective = paylink.Invoices[0].Transactions[0].Time[0:10]
-	}
+	effective := i.effectiveISODateOrToday(paylink)
+	comment := "CC orderId " + i.transactionUuid(paylink) + " (auto created)"
 
 	transaction := paymentservice.Transaction{
 		ID:        paylink.ReferenceID,
@@ -107,7 +103,7 @@ func (i *Impl) createTransaction(ctx context.Context, paylink concardis.PaymentL
 			Currency:  paylink.Currency,
 			VatRate:   paylink.VatRate,
 		},
-		Comment:       "Auto-created by cncrd adapter because the reference_id could not be found in the payment service.",
+		Comment:       comment,
 		Status:        paymentservice.Pending,
 		EffectiveDate: effective,
 		DueDate:       effective,
@@ -129,17 +125,14 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentL
 		return nil // not an error
 	}
 
-	today := time.Now().Format(isoDateFormat)
-	effective := today
-
-	if len(paylink.Invoices) > 0 && len(paylink.Invoices[0].Transactions) > 0 && len(paylink.Invoices[0].Transactions[0].Time) >= 10 {
-		effective = paylink.Invoices[0].Transactions[0].Time[0:10]
-	}
+	effective := i.effectiveISODateOrToday(paylink)
+	comment := "CC orderId " + i.transactionUuid(paylink)
 
 	transaction.Amount.GrossCent = paylink.Amount
 	transaction.Amount.Currency = paylink.Currency
 	transaction.Status = paymentservice.Pending
 	transaction.EffectiveDate = effective
+	transaction.Comment = comment
 
 	err := paymentservice.Get().UpdateTransaction(ctx, transaction)
 	if err != nil {
@@ -149,6 +142,43 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentL
 	}
 
 	return nil
+}
+
+func (i *Impl) effectiveISODateOrToday(paylink concardis.PaymentLinkQueryResponse) string {
+	today := time.Now().Format(isoDateFormat)
+	effective := today
+
+	if len(paylink.Invoices) > 0 {
+		lastInvoice := paylink.Invoices[len(paylink.Invoices)-1]
+
+		if len(lastInvoice.Transactions) > 0 {
+			lastTransaction := lastInvoice.Transactions[len(lastInvoice.Transactions)-1]
+
+			if len(lastTransaction.Time) >= 10 {
+				effective = lastTransaction.Time[0:10]
+			}
+		}
+	}
+
+	return effective
+}
+
+func (i *Impl) transactionUuid(paylink concardis.PaymentLinkQueryResponse) string {
+	result := "unknown"
+
+	if len(paylink.Invoices) > 0 {
+		lastInvoice := paylink.Invoices[len(paylink.Invoices)-1]
+
+		if len(lastInvoice.Transactions) > 0 {
+			lastTransaction := lastInvoice.Transactions[len(lastInvoice.Transactions)-1]
+
+			if lastTransaction.UUID != "" {
+				result = lastTransaction.UUID
+			}
+		}
+	}
+
+	return result
 }
 
 func debitorIdFromReferenceID(ref_id string) (uint, error) {
