@@ -33,7 +33,7 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 				Currency:  "EUR",
 				GrossCent: 390,
 			},
-			Status:        "pending",
+			Status:        "valid",
 			EffectiveDate: "2023-01-08",
 			Comment:       "CC orderId d3adb33f",
 		},

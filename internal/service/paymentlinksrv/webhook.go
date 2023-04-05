@@ -130,7 +130,7 @@ func (i *Impl) updateTransaction(ctx context.Context, paylink concardis.PaymentL
 
 	transaction.Amount.GrossCent = paylink.Amount
 	transaction.Amount.Currency = paylink.Currency
-	transaction.Status = paymentservice.Pending
+	transaction.Status = paymentservice.Valid
 	transaction.EffectiveDate = effective
 	transaction.Comment = comment
 
