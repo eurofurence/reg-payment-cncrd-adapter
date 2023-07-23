@@ -41,18 +41,6 @@ or manually run
 go test -covermode=atomic -coverpkg=./internal/... ./...
 ```
 
-## Contract Testing
-
-This microservice uses [pact-go](https://github.com/pact-foundation/pact-go#installation) for contract tests.
-
-Before you can run the contract tests in this repository, you need to run the consumer side contract tests
-in the [reg-payment-service](https://github.com/eurofurence/reg-payment-service) to generate
-the contract specifications. It is sufficient to just run what's under `test/contract/consumer`.
-
-You are expected to clone that repository into a directory called `reg-payment-service`
-right next to this repository. If you wish to place your contract specs somewhere else, simply change the
-path or URL in `test/contract/producer/setup_ctr_test.go`.
-
 ## Open Issues and Ideas
 
 We track open issues as GitHub issues on this repository once it becomes clear what exactly needs to be done.
