@@ -55,6 +55,14 @@ func newClient() (ConcardisDownstream, error) {
 	}, nil
 }
 
+func NewTestingClient(verifierClient aurestclientapi.Client) ConcardisDownstream {
+	return &Impl{
+		client:       verifierClient,
+		baseUrl:      config.ConcardisDownstreamBaseUrl(),
+		instanceName: config.ConcardisInstanceName(),
+	}
+}
+
 type createLowlevelResponseBody struct {
 	Status string               `json:"status"`
 	Data   []PaymentLinkCreated `json:"data"`

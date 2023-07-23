@@ -2,29 +2,22 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	auzerolog "github.com/StephanHCB/go-autumn-logging-zerolog"
+	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
+	aurestverifier "github.com/StephanHCB/go-autumn-restclient/implementation/verifier"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
-	"github.com/pact-foundation/pact-go/dsl"
-	"log"
+	"github.com/stretchr/testify/require"
+	"net/http"
 	"testing"
+	"time"
 )
-
-// contract test consumer side
 
 func TestConcardisApiClient(t *testing.T) {
 	auzerolog.SetupPlaintextLogging()
 
-	// Create Pact connecting to local Daemon
-	pact := &dsl.Pact{
-		Consumer: "reg_payment_cncrd_adapter",
-		Provider: "concardis_api",
-		Host:     "localhost",
-	}
-	defer pact.Teardown()
-
+	docs.Given("given the concardis adapter is correctly configured (not in local mock mode)")
 	// set up basic configuration
 	config.LoadTestingConfigurationFromPathOrAbort("../../resources/testconfig.yaml")
 
@@ -44,10 +37,10 @@ func TestConcardisApiClient(t *testing.T) {
 		SKU:         "REG2022V01AT000004",
 		Email:       "test@example.com",
 	}
-	createRequestSampleBody := `title=Convention+Registration&description=Please+pay+for+your+registration&psp=1&` +
-		`referenceId=220118-150405-000004&purpose=EF+2022+REG+000004&amount=10550&vatRate=19.0&currency=EUR&` +
+	createRequestSampleBody := `title=Convention%20Registration&description=Please%20pay%20for%20your%20registration&psp=1&` +
+		`referenceId=220118-150405-000004&purpose=EF%202022%20REG%20000004&amount=10550&vatRate=19.0&currency=EUR&` +
 		`sku=REG2022V01AT000004&preAuthorization=0&reservation=0&` +
-		`fields[email][mandatory]=1&fields[email][defaultValue]=test@example.com&ApiSignature=omitted`
+		`fields%5Bemail%5D%5Bmandatory%5D=1&fields%5Bemail%5D%5BdefaultValue%5D=test@example.com&ApiSignature=omitted`
 	createRequestResponse := `{
   "status": "success",
   "data": [
@@ -222,105 +215,85 @@ func TestConcardisApiClient(t *testing.T) {
 	// STEP 3: delete
 	deleteRequestSampleBody := `ApiSignature=omitted`
 
-	// Pass in test case (consumer side)
-	// This uses the repository on the consumer side to make the http call, should be as low level as possible
-	var test = func() (err error) {
-		ctx := auzerolog.AddLoggerToCtx(context.Background())
+	ctx := auzerolog.AddLoggerToCtx(context.Background())
 
-		// override configuration with pact server url
-		config.Configuration().Service.ConcardisDownstream = fmt.Sprintf("http://localhost:%d", pact.Server.Port)
+	// set a server url so local simulator mode is off
+	config.Configuration().Service.ConcardisDownstream = "http://localhost:8000"
 
-		// set up downstream client
-		err = concardis.Create()
-		if err != nil {
-			return err
-		}
-		client := concardis.Get()
-		// pact does not support regex matchers for x-www-form-urlencoded, when it eventually does, we could use the actual signature
-		concardis.FixedSignatureValue = "omitted"
-
-		// STEP 1: create a new payment link
-		created, err := client.CreatePaymentLink(ctx, createRequest)
-		if err != nil {
-			return err
-		}
-		if created.ID != 42 || created.ReferenceID != "220118-150405-000004" || created.Link != "http://localhost/some/pay/link" {
-			return errors.New("unexpected create response")
-		}
-
-		// STEP 2: read the payment link again after use
-		read, err := client.QueryPaymentLink(ctx, created.ID)
-		if err != nil {
-			return err
-		}
-		if read.Invoices[0].PaymentRequestId != 42 || read.ReferenceID != "220118-150405-000004" || read.Status != "confirmed" {
-			return errors.New("unexpected query response")
-		}
-
-		// STEP 3: delete the payment link (wouldn't normally work after use)
-		err = client.DeletePaymentLink(ctx, created.ID)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
+	docs.When("when requests to create, then read, then delete a paylink are made")
+	docs.Then("then all three requests are successful")
 
 	// Set up our expected interactions.
-	pact.
-		AddInteraction().
-		UponReceiving("A request to create a payment link").
-		// pact does not support regex matchers for x-www-form-urlencoded
-		WithRequest(dsl.Request{
-			Method:  "POST",
-			Path:    dsl.String("/v1.0/Invoice/"),
-			Query:   dsl.MapMatcher{"instance": dsl.String("myinstance")},
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String("application/x-www-form-urlencoded")},
-			Body:    dsl.String(createRequestSampleBody),
-		}).
-		WillRespondWith(dsl.Response{
-			Status:  200,
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String("application/json")},
-			Body:    dsl.String(createRequestResponse),
-		})
+	verifierClient, verifierImpl := aurestverifier.New()
+	verifierImpl.AddExpectation(aurestverifier.Request{
+		Name:   "create-paylink",
+		Method: http.MethodPost,
+		Header: http.Header{ // not verified
+			"Content-Type": []string{"application/x-www-form-urlencoded"},
+		},
+		Url:  "http://localhost:8000/v1.0/Invoice/?instance=myinstance",
+		Body: createRequestSampleBody,
+	}, aurestclientapi.ParsedResponse{
+		Body:   createRequestResponse,
+		Status: http.StatusOK,
+		Header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
+		Time: time.Time{},
+	}, nil)
+	verifierImpl.AddExpectation(aurestverifier.Request{
+		Name:   "read-paylink-after-use",
+		Method: http.MethodGet,
+		Header: http.Header{ // not verified
+			"Content-Type": []string{"application/x-www-form-urlencoded"},
+		},
+		Url:  "http://localhost:8000/v1.0/Invoice/42/?instance=myinstance",
+		Body: queryRequestSampleBody,
+	}, aurestclientapi.ParsedResponse{
+		Body:   queryRequestResponse,
+		Status: http.StatusOK,
+		Header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
+		Time: time.Time{},
+	}, nil)
+	verifierImpl.AddExpectation(aurestverifier.Request{
+		Name:   "delete-paylink",
+		Method: http.MethodDelete,
+		Header: http.Header{ // not verified
+			"Content-Type": []string{"application/x-www-form-urlencoded"},
+		},
+		Url:  "http://localhost:8000/v1.0/Invoice/42/?instance=myinstance",
+		Body: deleteRequestSampleBody,
+	}, aurestclientapi.ParsedResponse{
+		Status: http.StatusOK,
+		Time:   time.Time{},
+	}, nil)
 
-	pact.
-		AddInteraction().
-		UponReceiving("A request to read the same payment link").
-		WithRequest(dsl.Request{
-			Method:  "GET",
-			Path:    dsl.String("/v1.0/Invoice/42/"),
-			Query:   dsl.MapMatcher{"instance": dsl.String("myinstance")},
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String("application/x-www-form-urlencoded")},
-			Body:    dsl.String(queryRequestSampleBody),
-		}).
-		WillRespondWith(dsl.Response{
-			Status:  200,
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String("application/json")},
-			Body:    dsl.String(queryRequestResponse),
-		})
+	// set up downstream client
+	client := concardis.NewTestingClient(verifierClient)
+	// verifier does not support regex matchers for x-www-form-urlencoded
+	concardis.FixedSignatureValue = "omitted"
 
-	pact.
-		AddInteraction().
-		UponReceiving("A request to delete the same payment link").
-		WithRequest(dsl.Request{
-			Method:  "DELETE",
-			Path:    dsl.String("/v1.0/Invoice/42/"),
-			Query:   dsl.MapMatcher{"instance": dsl.String("myinstance")},
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String("application/x-www-form-urlencoded")},
-			Body:    dsl.String(deleteRequestSampleBody),
-		}).
-		WillRespondWith(dsl.Response{
-			Status: 200,
-		})
+	// STEP 1: create a new payment link
+	created, err := client.CreatePaymentLink(ctx, createRequest)
+	require.Nil(t, err)
+	require.Equal(t, uint(42), created.ID)
+	require.Equal(t, "220118-150405-000004", created.ReferenceID)
+	require.Equal(t, "http://localhost/some/pay/link", created.Link)
 
-	// Run the test, verify it did what we expected and capture the contract (writes a test log to logs/pact.log)
-	if err := pact.Verify(test); err != nil {
-		log.Fatalf("Error on Verify: %v", err)
-	}
+	// STEP 2: read the payment link again after use
+	read, err := client.QueryPaymentLink(ctx, created.ID)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(read.Invoices))
+	require.Equal(t, uint(42), read.Invoices[0].PaymentRequestId)
+	require.Equal(t, "220118-150405-000004", read.ReferenceID)
+	require.Equal(t, "confirmed", read.Status)
 
-	// now write out the contract json (by default it goes to subdirectory pacts)
-	if err := pact.WritePact(); err != nil {
-		log.Fatalf("Error on pact write: %v", err)
-	}
+	// STEP 3: delete the payment link (wouldn't normally work after use)
+	err = client.DeletePaymentLink(ctx, created.ID)
+	require.Nil(t, err)
+
+	docs.Then("and the expected interactions have occurred in the correct order")
+	require.Nil(t, verifierImpl.FirstUnexpectedOrNil())
 }
