@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 )
 
@@ -21,6 +22,24 @@ func setConfigurationDefaults(c *Application) {
 	}
 	if c.Logging.Severity == "" {
 		c.Logging.Severity = "INFO"
+	}
+}
+
+const (
+	envConcardisApiSecret             = "REG_SECRET_CONCARDIS_API_SECRET"
+	envConcardisIncomingWebhookSecret = "REG_SECRET_CONCARDIS_INCOMING_WEBHOOK_SECRET"
+	envApiToken                       = "REG_SECRET_API_TOKEN"
+)
+
+func applyEnvVarOverrides(c *Application) {
+	if concardisApiSecret := os.Getenv(envConcardisApiSecret); concardisApiSecret != "" {
+		c.Service.ConcardisApiSecret = concardisApiSecret
+	}
+	if concardisIncomingWebhookSecret := os.Getenv(envConcardisIncomingWebhookSecret); concardisIncomingWebhookSecret != "" {
+		c.Security.Fixed.Webhook = concardisIncomingWebhookSecret
+	}
+	if apiToken := os.Getenv(envApiToken); apiToken != "" {
+		c.Security.Fixed.Api = apiToken
 	}
 }
 

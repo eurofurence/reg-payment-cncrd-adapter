@@ -47,6 +47,8 @@ func parseAndOverwriteConfig(yamlFile []byte, logPrintf func(format string, v ..
 
 	setConfigurationDefaults(newConfigurationData)
 
+	applyEnvVarOverrides(newConfigurationData)
+
 	errs := url.Values{}
 	validateServiceConfiguration(errs, newConfigurationData.Service)
 	validateServerConfiguration(errs, newConfigurationData.Server)
