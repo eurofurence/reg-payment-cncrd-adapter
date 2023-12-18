@@ -3,6 +3,7 @@ package acceptance
 import (
 	"fmt"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
@@ -23,6 +24,15 @@ func TestWebhook_Success_TolerantReader(t *testing.T) {
 
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusOK, response.status)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "221216-122218-000001",
+		ApiId:       42,
+		Kind:        "success",
+		Message:     "webhook query-pay-link",
+		Details:     "status=confirmed amount=390",
+	})
 }
 
 func TestWebhook_Success_Status_Confirmed(t *testing.T) {
@@ -37,14 +47,30 @@ func TestWebhook_Success_Status_Confirmed(t *testing.T) {
 			EffectiveDate: "2023-01-08",
 			Comment:       "CC orderId d3adb33f",
 		},
-	}, []mailservice.MailSendDto{})
+	}, []mailservice.MailSendDto{}, []entity.ProtocolEntry{
+		{
+			ReferenceId: "221216-122218-000001",
+			ApiId:       42,
+			Kind:        "success",
+			Message:     "webhook query-pay-link",
+			Details:     "status=confirmed amount=390",
+		},
+	})
 }
 
 func TestWebhook_Success_Status_Ignored(t *testing.T) {
 	for _, status := range []string{"cancelled", "declined"} {
 		testname := fmt.Sprintf("Status_%s", status)
 		t.Run(testname, func(t *testing.T) {
-			tstWebhookSuccessCase(t, status, []paymentservice.Transaction{}, []mailservice.MailSendDto{})
+			tstWebhookSuccessCase(t, status, []paymentservice.Transaction{}, []mailservice.MailSendDto{}, []entity.ProtocolEntry{
+				{
+					ReferenceId: "221216-122218-000001",
+					ApiId:       42,
+					Kind:        "success",
+					Message:     "webhook query-pay-link",
+					Details:     fmt.Sprintf("status=%s amount=390", status),
+				},
+			})
 		})
 	}
 }
@@ -55,6 +81,14 @@ func TestWebhook_Success_Status_NotifyMail(t *testing.T) {
 		t.Run(testname, func(t *testing.T) {
 			tstWebhookSuccessCase(t, status, []paymentservice.Transaction{}, []mailservice.MailSendDto{
 				tstExpectedMailNotification("webhook", status),
+			}, []entity.ProtocolEntry{
+				{
+					ReferenceId: "221216-122218-000001",
+					ApiId:       42,
+					Kind:        "success",
+					Message:     "webhook query-pay-link",
+					Details:     fmt.Sprintf("status=%s amount=390", status),
+				},
 			})
 		})
 	}
@@ -105,7 +139,7 @@ func TestWebhook_DownstreamError(t *testing.T) {
 
 // --- helpers ---
 
-func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRecording []paymentservice.Transaction, expectedMailRecording []mailservice.MailSendDto) {
+func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRecording []paymentservice.Transaction, expectedMailRecording []mailservice.MailSendDto, expectedProtocol []entity.ProtocolEntry) {
 	tstSetup(tstConfigFile)
 	defer tstShutdown()
 
@@ -141,4 +175,11 @@ func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRe
 		docs.Then("and the expected error notification emails have been sent")
 	}
 	tstRequireMailServiceRecording(t, expectedMailRecording)
+
+	if len(expectedProtocol) == 0 {
+		docs.Then("and no protocol entries have been written")
+	} else {
+		docs.Then("and the expected protocol entries have been written")
+	}
+	tstRequireProtocolEntries(t, expectedProtocol...)
 }

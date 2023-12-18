@@ -18,6 +18,16 @@ service:
   failure_redirect: 'http://localhost:10000/app/register'
 server:
   port: 9097
+database:
+  use: 'mysql' # or inmemory
+  username: 'demouser'
+  password: 'demopw'
+  database: 'tcp(localhost:3306)/dbname'
+  parameters:
+    - 'charset=utf8mb4'
+    - 'collation=utf8mb4_general_ci'
+    - 'parseTime=True'
+    - 'timeout=30s' # connection timeout
 logging:
   severity: INFO
   # switch to true to log ALL communication from/to the payment provider (only signatures omitted)

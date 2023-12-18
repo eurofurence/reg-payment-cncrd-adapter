@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +40,15 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 	paylink, err := concardis.Get().QueryPaymentLink(ctx, paylinkId)
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("can't query payment link from concardis. err=%s", err.Error())
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
+			ApiId:       paylinkId,
+			Kind:        "error",
+			Message:     "webhook query-pay-link failed",
+			Details:     err.Error(),
+			RequestId:   "",
+		})
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "api-error")
 		return err
 	}
@@ -45,11 +56,29 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 	if paylink.ReferenceID != webhook.Transaction.Invoice.ReferenceId {
 		// webhook data claimed it was about ref_id A, but the paylink is for ref_id B
 		aulogging.Logger.Ctx(ctx).Error().Printf("webhook reference_id mismatch, ref_id in webhook=%s, ref_id in paylink data=%s", webhook.Transaction.Invoice.ReferenceId, paylink.ReferenceID)
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
+			ApiId:       paylinkId,
+			Kind:        "error",
+			Message:     "webhook ref-id-mismatch",
+			Details:     fmt.Sprintf("response ref-id=%s vs webhook ref-id=%s", paylink.ReferenceID, webhook.Transaction.Invoice.ReferenceId),
+			RequestId:   "",
+		})
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "ref-id-mismatch")
 		return WebhookRefIdMismatchErr
 	}
 
 	aulogging.Logger.Ctx(ctx).Info().Printf("webhook call for paylink id=%d ref=%s status=%s amount=%d", paylink.ID, paylink.ReferenceID, paylink.Status, paylink.Amount)
+	db := database.GetRepository()
+	_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+		ReferenceId: paylink.ReferenceID,
+		ApiId:       paylinkId,
+		Kind:        "success",
+		Message:     "webhook query-pay-link",
+		Details:     fmt.Sprintf("status=%s amount=%d", paylink.Status, paylink.Amount),
+		RequestId:   "",
+	})
 
 	if paylink.Status == "cancelled" || paylink.Status == "declined" {
 		aulogging.Logger.Ctx(ctx).Info().Printf("irrelevant status, ignoring as successful")

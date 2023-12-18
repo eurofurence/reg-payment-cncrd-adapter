@@ -2,6 +2,9 @@ package acceptance
 
 import (
 	"encoding/json"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database/inmemorydb"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 	"io/ioutil"
@@ -232,5 +235,19 @@ func tstExpectedMailNotification(operation string, status string) mailservice.Ma
 			"operation":   operation,
 			"referenceId": "221216-122218-000001",
 		},
+	}
+}
+
+func tstRequireProtocolEntries(t *testing.T, expectedProtocol ...entity.ProtocolEntry) {
+	db := database.GetRepository().(*inmemorydb.InMemoryRepository)
+	actualProtocol := db.ProtocolEntries()
+	require.Equal(t, len(expectedProtocol), len(actualProtocol))
+	for i, expected := range expectedProtocol {
+		actual := *(actualProtocol[i])
+		require.Equal(t, expected.ReferenceId, actual.ReferenceId)
+		require.Equal(t, expected.ApiId, actual.ApiId)
+		require.Equal(t, expected.Kind, actual.Kind)
+		require.Equal(t, expected.Message, actual.Message)
+		require.Equal(t, expected.Details, actual.Details)
 	}
 }

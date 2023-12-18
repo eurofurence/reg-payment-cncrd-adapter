@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/paymentservice"
 )
@@ -26,6 +27,14 @@ func (i *Impl) Run() int {
 		return 1
 	}
 	setLoglevel(config.LoggingSeverity())
+
+	if err := database.Open(); err != nil {
+		return 1
+	}
+	defer database.Close()
+	if err := database.MigrateIfSwitchedOn(); err != nil {
+		return 1
+	}
 
 	if err := attendeeservice.Create(); err != nil {
 		return 1

@@ -61,6 +61,7 @@ logging:
 	require.NotNil(t, err, "expected an error")
 	require.Equal(t, err.Error(), "configuration validation error", "unexpected error message")
 	require.EqualValues(t, []string{
+		"configuration error: database.use: must be one of mysql, inmemory",
 		"configuration error: invoice.description: invoice.description field must be at least 1 and at most 256 characters long",
 		"configuration error: invoice.purpose: invoice.purpose field must be at least 1 and at most 256 characters long",
 		"configuration error: invoice.title: invoice.title field must be at least 1 and at most 256 characters long",
@@ -83,6 +84,8 @@ security:
   fixed_token:
     api: 'fixed-testing-token-abc'
     webhook: 'fixed-webhook-token-abc'
+database:
+  use: inmemory
 service:
   concardis_instance: 'my-demo-instance'
   concardis_api_secret: 'my-demo-secret'
