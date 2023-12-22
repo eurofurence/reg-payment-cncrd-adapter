@@ -3,6 +3,7 @@ package acceptance
 import (
 	"github.com/eurofurence/reg-payment-cncrd-adapter/docs"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/api/v1/cncrdapi"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/attendeeservice"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/concardis"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/mailservice"
@@ -32,6 +33,15 @@ func TestCreatePaylink_Success(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"CreatePaymentLink {some page title some page description 1 221216-122218-000001 221216122218000001 some payment purpose 390 19 EUR registration jsquirrel_github_9a6d@packetloss.de  }",
 	)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "221216-122218-000001",
+		ApiId:       101,
+		Kind:        "success",
+		Message:     "create-pay-link",
+		Details:     "http://localhost:1111/some/paylink/101",
+	})
 }
 
 func TestCreatePaylink_InvalidJson(t *testing.T) {
@@ -49,6 +59,9 @@ func TestCreatePaylink_InvalidJson(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_ValidJsonWrongFields(t *testing.T) {
@@ -66,6 +79,9 @@ func TestCreatePaylink_ValidJsonWrongFields(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_InvalidData(t *testing.T) {
@@ -94,6 +110,9 @@ func TestCreatePaylink_InvalidData(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_Anonymous(t *testing.T) {
@@ -112,6 +131,9 @@ func TestCreatePaylink_Anonymous(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_WrongToken(t *testing.T) {
@@ -130,6 +152,9 @@ func TestCreatePaylink_WrongToken(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_DownstreamErrorAttSrv(t *testing.T) {
@@ -146,6 +171,12 @@ func TestCreatePaylink_DownstreamErrorAttSrv(t *testing.T) {
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "attsrv.downstream.error", nil)
+
+	docs.Then("and no requests to the payment provider have been made")
+	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
@@ -166,6 +197,15 @@ func TestCreatePaylink_DownstreamErrorCncrd(t *testing.T) {
 	docs.Then("and the expected email notifications have been sent")
 	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
 		tstExpectedMailNotification("create-pay-link", "downstream unavailable - see log for details"),
+	})
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "221216-122218-000001",
+		ApiId:       0,
+		Kind:        "error",
+		Message:     "create-pay-link failed",
+		Details:     "downstream unavailable - see log for details",
 	})
 }
 
@@ -188,6 +228,15 @@ func TestGetPaylink_Success(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"QueryPaymentLink 42",
 	)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "221216-122218-000001",
+		ApiId:       42,
+		Kind:        "success",
+		Message:     "get-pay-link",
+		Details:     "http://localhost:1111/some/paylink/42",
+	})
 }
 
 func TestGetPaylink_InvalidId(t *testing.T) {
@@ -205,6 +254,9 @@ func TestGetPaylink_InvalidId(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestGetPaylink_NotFound(t *testing.T) {
@@ -224,6 +276,15 @@ func TestGetPaylink_NotFound(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"QueryPaymentLink 13",
 	)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       13,
+		Kind:        "error",
+		Message:     "get-pay-link failed",
+		Details:     "payment link id not found",
+	})
 }
 
 func TestGetPaylink_Anonymous(t *testing.T) {
@@ -241,6 +302,9 @@ func TestGetPaylink_Anonymous(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestGetPaylink_WrongToken(t *testing.T) {
@@ -258,6 +322,9 @@ func TestGetPaylink_WrongToken(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestGetPaylink_DownstreamError(t *testing.T) {
@@ -278,6 +345,15 @@ func TestGetPaylink_DownstreamError(t *testing.T) {
 	expNotif := tstExpectedMailNotification("get-pay-link", "downstream unavailable - see log for details")
 	expNotif.Variables["referenceId"] = "paylink id 42"
 	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       42,
+		Kind:        "error",
+		Message:     "get-pay-link failed",
+		Details:     "downstream unavailable - see log for details",
+	})
 }
 
 // --- delete ---
@@ -300,6 +376,15 @@ func TestDeletePaylink_Success(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"DeletePaymentLink 42",
 	)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       42,
+		Kind:        "success",
+		Message:     "delete-pay-link",
+		Details:     "",
+	})
 }
 
 func TestDeletePaylink_InvalidId(t *testing.T) {
@@ -317,6 +402,9 @@ func TestDeletePaylink_InvalidId(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestDeletePaylink_NotFound(t *testing.T) {
@@ -336,6 +424,15 @@ func TestDeletePaylink_NotFound(t *testing.T) {
 	tstRequireConcardisRecording(t,
 		"DeletePaymentLink 13",
 	)
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       13,
+		Kind:        "error",
+		Message:     "delete-pay-link failed",
+		Details:     "payment link id not found",
+	})
 }
 
 func TestDeletePaylink_Anonymous(t *testing.T) {
@@ -353,6 +450,9 @@ func TestDeletePaylink_Anonymous(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestDeletePaylink_WrongToken(t *testing.T) {
@@ -370,6 +470,9 @@ func TestDeletePaylink_WrongToken(t *testing.T) {
 
 	docs.Then("and no requests to the payment provider have been made")
 	require.Empty(t, concardisMock.Recording())
+
+	docs.Then("and no protocol entries have been written")
+	tstRequireProtocolEntries(t)
 }
 
 func TestDeletePaylink_DownstreamError(t *testing.T) {
@@ -390,4 +493,13 @@ func TestDeletePaylink_DownstreamError(t *testing.T) {
 	expNotif := tstExpectedMailNotification("delete-pay-link", "downstream unavailable - see log for details")
 	expNotif.Variables["referenceId"] = "paylink id 42"
 	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{expNotif})
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "",
+		ApiId:       42,
+		Kind:        "error",
+		Message:     "delete-pay-link failed",
+		Details:     "downstream unavailable - see log for details",
+	})
 }

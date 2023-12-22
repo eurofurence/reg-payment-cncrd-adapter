@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
 	"net/http"
 	"net/url"
 	"strings"
@@ -142,6 +145,14 @@ func buildCreateRequestBody(ctx context.Context, request PaymentLinkCreateReques
 	queryEncodedPayloadForSigning := constructBufferWithEncoding(request, queryEncode)
 
 	if config.LogFullRequests() {
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: request.ReferenceId,
+			Kind:        "raw",
+			Message:     "concardis request",
+			Details:     pathEncodedPayload,
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
 		aulogging.Logger.Ctx(ctx).Info().Print("concardis request: " + pathEncodedPayload)
 	}
 
@@ -149,7 +160,7 @@ func buildCreateRequestBody(ctx context.Context, request PaymentLinkCreateReques
 	return pathEncodedPayload + "&" + queryEncode(signatureKey, signature)
 }
 
-func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string, method string, requestUrl string, requestBody string, response *aurestclientapi.ParsedResponse) error {
+func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string, refId string, apiId uint, method string, requestUrl string, requestBody string, response *aurestclientapi.ParsedResponse) error {
 	rawResponseBody := &([]byte{}) // prevent nil in case request fails before parsing response
 
 	responseRaw := aurestclientapi.ParsedResponse{
@@ -170,6 +181,20 @@ func (i *Impl) performWithRawResponseLogging(ctx context.Context, logName string
 		bodyStr = strings.ReplaceAll(bodyStr, "\r", "")
 		bodyStr = strings.ReplaceAll(bodyStr, "\n", "\\n")
 		aulogging.Logger.Ctx(ctx).Info().Print("concardis response: " + bodyStr)
+
+		bodyStrDB := string(*rawResponseBody)
+		bodyStrDB = strings.ReplaceAll(bodyStrDB, "\r", "")
+		bodyStrDB = strings.ReplaceAll(bodyStrDB, "\n", "")
+		bodyStrDB = strings.ReplaceAll(bodyStrDB, " ", "")
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: refId,
+			ApiId:       apiId,
+			Kind:        "raw",
+			Message:     "concardis response",
+			Details:     bodyStrDB,
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
 	}
 
 	if err := json.Unmarshal(*rawResponseBody, response.Body); err != nil {
@@ -191,7 +216,7 @@ func (i *Impl) CreatePaymentLink(ctx context.Context, request PaymentLinkCreateR
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
 	}
-	if err := i.performWithRawResponseLogging(ctx, "CreatePaymentLink", http.MethodPost, requestUrl, requestBody, &response); err != nil {
+	if err := i.performWithRawResponseLogging(ctx, "CreatePaymentLink", request.ReferenceId, 0, http.MethodPost, requestUrl, requestBody, &response); err != nil {
 		return PaymentLinkCreated{}, err
 	}
 	if response.Status >= 300 {
@@ -223,7 +248,7 @@ func (i *Impl) QueryPaymentLink(ctx context.Context, id uint) (PaymentLinkQueryR
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
 	}
-	if err := i.performWithRawResponseLogging(ctx, "QueryPaymentLink", http.MethodGet, requestUrl, requestBody, &response); err != nil {
+	if err := i.performWithRawResponseLogging(ctx, "QueryPaymentLink", "", id, http.MethodGet, requestUrl, requestBody, &response); err != nil {
 		return PaymentLinkQueryResponse{}, err
 	}
 	if response.Status >= 300 {

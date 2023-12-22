@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,20 @@ func ServicePublicURL() string {
 
 func ServerIdleTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
+}
+
+func DatabaseUse() DatabaseType {
+	return Configuration().Database.Use
+}
+
+func DatabaseMysqlConnectString() string {
+	c := Configuration().Database
+	return c.Username + ":" + c.Password + "@" +
+		c.Database + "?" + strings.Join(c.Parameters, "&")
+}
+
+func MigrateDatabase() bool {
+	return dbMigrate
 }
 
 func LoggingSeverity() string {

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 )
 
@@ -24,11 +25,46 @@ func setConfigurationDefaults(c *Application) {
 	}
 }
 
+const (
+	envConcardisApiSecret             = "REG_SECRET_CONCARDIS_API_SECRET"
+	envConcardisIncomingWebhookSecret = "REG_SECRET_CONCARDIS_INCOMING_WEBHOOK_SECRET"
+	envApiToken                       = "REG_SECRET_API_TOKEN"
+	envDbPassword                     = "REG_SECRET_DB_PASSWORD"
+)
+
+func applyEnvVarOverrides(c *Application) {
+	if concardisApiSecret := os.Getenv(envConcardisApiSecret); concardisApiSecret != "" {
+		c.Service.ConcardisApiSecret = concardisApiSecret
+	}
+	if concardisIncomingWebhookSecret := os.Getenv(envConcardisIncomingWebhookSecret); concardisIncomingWebhookSecret != "" {
+		c.Security.Fixed.Webhook = concardisIncomingWebhookSecret
+	}
+	if apiToken := os.Getenv(envApiToken); apiToken != "" {
+		c.Security.Fixed.Api = apiToken
+	}
+	if dbPassword := os.Getenv(envDbPassword); dbPassword != "" {
+		c.Database.Password = dbPassword
+	}
+}
+
 func validateServerConfiguration(errs url.Values, c ServerConfig) {
 	checkIntValueRange(&errs, 1024, 65535, "server.port", int(c.Port))
 	checkIntValueRange(&errs, 1, 300, "server.read_timeout_seconds", c.ReadTimeout)
 	checkIntValueRange(&errs, 1, 300, "server.write_timeout_seconds", c.WriteTimeout)
 	checkIntValueRange(&errs, 1, 300, "server.idle_timeout_seconds", c.IdleTimeout)
+}
+
+var allowedDatabases = []DatabaseType{Mysql, Inmemory}
+
+func validateDatabaseConfiguration(errs url.Values, c DatabaseConfig) {
+	if notInAllowedValues(allowedDatabases, c.Use) {
+		errs.Add("database.use", "must be one of mysql, inmemory")
+	}
+	if c.Use == Mysql {
+		checkLength(&errs, 1, 256, "database.username", c.Username)
+		checkLength(&errs, 1, 256, "database.password", c.Password)
+		checkLength(&errs, 1, 256, "database.database", c.Database)
+	}
 }
 
 var allowedSeverities = []string{"DEBUG", "INFO", "WARN", "ERROR"}
@@ -94,11 +130,15 @@ func checkIntValueRange(errs *url.Values, min int, max int, key string, value in
 	}
 }
 
-func notInAllowedValues(allowed []string, value string) bool {
-	for _, v := range allowed {
-		if v == value {
-			return false
+func notInAllowedValues[T comparable](allowed []T, value T) bool {
+	return !sliceContains(allowed, value)
+}
+
+func sliceContains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
 		}
 	}
-	return true
+	return false
 }

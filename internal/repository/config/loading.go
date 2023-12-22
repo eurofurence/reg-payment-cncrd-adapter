@@ -16,6 +16,7 @@ var (
 	configurationData     *Application
 	configurationLock     *sync.RWMutex
 	configurationFilename string
+	dbMigrate             bool
 	ecsLogging            bool
 )
 
@@ -29,6 +30,7 @@ func init() {
 	configurationLock = &sync.RWMutex{}
 
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
+	flag.BoolVar(&dbMigrate, "migrate-database", false, "migrate database on startup")
 	flag.BoolVar(&ecsLogging, "ecs-json-logging", false, "switch to structured json logging")
 }
 
@@ -47,9 +49,12 @@ func parseAndOverwriteConfig(yamlFile []byte, logPrintf func(format string, v ..
 
 	setConfigurationDefaults(newConfigurationData)
 
+	applyEnvVarOverrides(newConfigurationData)
+
 	errs := url.Values{}
 	validateServiceConfiguration(errs, newConfigurationData.Service)
 	validateServerConfiguration(errs, newConfigurationData.Server)
+	validateDatabaseConfiguration(errs, newConfigurationData.Database)
 	validateSecurityConfiguration(errs, newConfigurationData.Security)
 	validateLoggingConfiguration(errs, newConfigurationData.Logging)
 	validateInvoiceConfiguration(errs, newConfigurationData.Invoice)
