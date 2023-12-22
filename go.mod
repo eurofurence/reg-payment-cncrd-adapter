@@ -9,10 +9,12 @@ require (
 	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/driver/mysql v1.5.2
+	gorm.io/gorm v1.25.5
 )
 
 require (
@@ -28,6 +30,4 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.2 // indirect
-	gorm.io/gorm v1.25.5 // indirect
 )
