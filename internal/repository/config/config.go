@@ -95,6 +95,10 @@ func WebhookSecret() string {
 	return Configuration().Security.Fixed.Webhook
 }
 
+func TransactionIDPrefix() string {
+	return Configuration().Service.TransactionIDPrefix
+}
+
 func InvoiceTitle() string {
 	return Configuration().Invoice.Title
 }

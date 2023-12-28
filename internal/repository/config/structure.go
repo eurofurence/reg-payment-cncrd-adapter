@@ -41,6 +41,7 @@ type ServiceConfig struct {
 	ConcardisApiSecret  string `yaml:"concardis_api_secret"` // your instance's api secret, required
 	SuccessRedirect     string `yaml:"success_redirect"`
 	FailureRedirect     string `yaml:"failure_redirect"`
+	TransactionIDPrefix string `yaml:"transaction_id_prefix"`
 }
 
 // DatabaseConfig configures which db to use (mysql, inmemory)

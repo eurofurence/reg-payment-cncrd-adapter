@@ -16,6 +16,8 @@ service:
   # if set, will add these redirects to the request for the paylink
   success_redirect: 'http://localhost:10000/app/register'
   failure_redirect: 'http://localhost:10000/app/register'
+  # the service will reject webhooks that reference another prefix (previous year expiry, etc.)
+  transaction_id_prefix: "EF2023"
 server:
   port: 9097
 database:

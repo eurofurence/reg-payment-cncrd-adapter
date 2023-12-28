@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/entity"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/config"
 	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/repository/database"
+	"github.com/eurofurence/reg-payment-cncrd-adapter/internal/web/util/ctxvalues"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +49,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 			Kind:        "error",
 			Message:     "webhook query-pay-link failed",
 			Details:     err.Error(),
-			RequestId:   "",
+			RequestId:   ctxvalues.RequestId(ctx),
 		})
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "api-error")
 		return err
@@ -63,10 +65,27 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 			Kind:        "error",
 			Message:     "webhook ref-id-mismatch",
 			Details:     fmt.Sprintf("response ref-id=%s vs webhook ref-id=%s", paylink.ReferenceID, webhook.Transaction.Invoice.ReferenceId),
-			RequestId:   "",
+			RequestId:   ctxvalues.RequestId(ctx),
 		})
 		_ = i.SendErrorNotifyMail(ctx, "webhook", fmt.Sprintf("paylinkId: %d", paylinkId), "ref-id-mismatch")
 		return WebhookRefIdMismatchErr
+	}
+
+	prefix := config.TransactionIDPrefix()
+	if prefix != "" && !strings.HasPrefix(paylink.ReferenceID, prefix) {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("webhook with wrong ref id prefix, ref_id=%s", paylink.ReferenceID)
+		db := database.GetRepository()
+		_ = db.WriteProtocolEntry(ctx, &entity.ProtocolEntry{
+			ReferenceId: webhook.Transaction.Invoice.ReferenceId,
+			ApiId:       paylinkId,
+			Kind:        "error",
+			Message:     "webhook ref-id-prefix",
+			Details:     fmt.Sprintf("ref-id=%s", paylink.ReferenceID),
+			RequestId:   ctxvalues.RequestId(ctx),
+		})
+		_ = i.SendErrorNotifyMail(ctx, "webhook", paylink.ReferenceID, "ref-id-prefix")
+		// report success so they don't retry, it's not a big problem after all
+		return nil
 	}
 
 	aulogging.Logger.Ctx(ctx).Info().Printf("webhook call for paylink id=%d ref=%s status=%s amount=%d", paylink.ID, paylink.ReferenceID, paylink.Status, paylink.Amount)
@@ -77,7 +96,7 @@ func (i *Impl) HandleWebhook(ctx context.Context, webhook cncrdapi.WebhookEventD
 		Kind:        "success",
 		Message:     "webhook query-pay-link",
 		Details:     fmt.Sprintf("status=%s amount=%d", paylink.Status, paylink.Amount),
-		RequestId:   "",
+		RequestId:   ctxvalues.RequestId(ctx),
 	})
 
 	if paylink.Status == "cancelled" || paylink.Status == "declined" {
