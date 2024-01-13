@@ -137,6 +137,66 @@ func TestWebhook_DownstreamError(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadGateway, "webhook.downstream.error", nil)
 }
 
+func TestWebhook_Success_Status_WrongPrefix(t *testing.T) {
+	tstSetup(tstConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given the payment provider has a transaction in status confirmed")
+
+	docs.Given("and an anonymous caller who knows the secret url")
+	url := "/api/rest/v1/webhook/demosecret"
+
+	docs.When("when they trigger our webhook endpoint with the wrong prefix")
+	request := `
+{
+   "transaction": {
+       "id": 1892362736,
+       "invoice": {
+           "paymentRequestId": 4242,
+           "referenceId": "230001-122218-000001"
+       }
+   }
+}
+`
+	response := tstPerformPost(url, request, tstNoToken())
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusOK, response.status)
+
+	docs.Then("and the expected downstream requests have been made to the concardis api")
+	tstRequireConcardisRecording(t,
+		"QueryPaymentLink 4242",
+	)
+
+	docs.Then("and no requests to the payment service have been made")
+	tstRequirePaymentServiceRecording(t, nil)
+
+	docs.Then("and the expected error notification emails have been sent")
+	tstRequireMailServiceRecording(t, []mailservice.MailSendDto{
+		{
+			CommonID: "payment-cncrd-adapter-error",
+			Lang:     "en-US",
+			To: []string{
+				"errors@example.com",
+			},
+			Variables: map[string]string{
+				"status":      "ref-id-prefix",
+				"operation":   "webhook",
+				"referenceId": "230001-122218-000001",
+			},
+		},
+	})
+
+	docs.Then("and the expected protocol entries have been written")
+	tstRequireProtocolEntries(t, entity.ProtocolEntry{
+		ReferenceId: "230001-122218-000001",
+		ApiId:       4242,
+		Kind:        "error",
+		Message:     "webhook ref-id-prefix",
+		Details:     "ref-id=230001-122218-000001",
+	})
+}
+
 // --- helpers ---
 
 func tstWebhookSuccessCase(t *testing.T, status string, expectedPaymentServiceRecording []paymentservice.Transaction, expectedMailRecording []mailservice.MailSendDto, expectedProtocol []entity.ProtocolEntry) {
