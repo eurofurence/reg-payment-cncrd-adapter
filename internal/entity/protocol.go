@@ -12,6 +12,6 @@ type ProtocolEntry struct {
 	ApiId       uint
 	Kind        string `gorm:"type:varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
 	Message     string `gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`
-	Details     string `gorm:"type:text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`       // usually: json message
+	Details     string `gorm:"type:longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`   // usually: json message
 	RequestId   string `gorm:"type:varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"` // optional
 }
