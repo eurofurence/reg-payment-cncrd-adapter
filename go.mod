@@ -10,7 +10,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/google/uuid v1.6.0
-	github.com/rs/zerolog v1.31.0
+	github.com/rs/zerolog v1.32.0
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.5.3
