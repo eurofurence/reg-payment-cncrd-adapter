@@ -2,6 +2,8 @@
 
 <img src="https://github.com/eurofurence/reg-payment-cncrd-adapter/actions/workflows/go.yml/badge.svg" alt="test status"/>
 
+**ARCHIVED - no longer in use!**
+
 ## Overview
 
 A backend service that provides payment functionality via the Concardis payment provider.
